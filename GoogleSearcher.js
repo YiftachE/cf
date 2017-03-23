@@ -4,8 +4,7 @@ var async = require('async')
 
 var dbc = new DeathByCaptcha('edenfisher', '123456');
 var options = {
-  limit: 10,
-  solver:dbc
+  limit: 10
 };
 
 var searcher = {};
