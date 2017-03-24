@@ -1,7 +1,9 @@
 var searcher = require('./googleSearcher.js');
 var finder = require('./contactUsFinder.js');
+var async = require('async')
+
 searcher.search('nirel').then(function(urls) {
-  async.each(urls,function(url,cb){
+  async.each(urls.results,function(url,cb){
     finder.find(url).then(function(){
       cb();
     }).catch(function(err){

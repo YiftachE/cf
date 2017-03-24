@@ -1,10 +1,9 @@
 var scraper = require('google-search-scraper');
-var DeathByCaptcha = require('deathbycaptcha');
-var async = require('async')
+var solver = require('./2captchaSolver.js')
 
-var dbc = new DeathByCaptcha('edenfisher', '123456');
 var options = {
-  limit: 10
+  limit: 100,
+  solver:solver
 };
 
 var searcher = {};
