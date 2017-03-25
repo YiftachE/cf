@@ -1,8 +1,10 @@
 var scraper = require('google-search-scraper');
 var solver = require('./2captchaSolver.js')
+// DeathByCaptcha = require("deathbycaptcha");
+// var dbc = new DeathByCaptcha("Jsinger@zdhconsulting.com", "67araydeathbycaptcha");
 
 var options = {
-  limit: 100,
+  limit: 10,
   solver:solver
 };
 
@@ -14,7 +16,7 @@ searcher.search = function(keyword) {
     var errors = [];
     scraper.search(options, function(err, url) {
       if(err) {
-        reject(err);
+        console.log(err)
       }
       else {
         results.push(url)

@@ -4,6 +4,7 @@ var async = require('async')
 
 searcher.search('nirel').then(function(urls) {
   async.each(urls.results,function(url,cb){
+    console.log(url);
     finder.find(url).then(function(){
       cb();
     }).catch(function(err){
