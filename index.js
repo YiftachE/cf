@@ -17,13 +17,12 @@ searcher.search('nirel').then(function(urls) {
   //     console.log('all pages finshed');
   //   }
   // });
-  finder.find(urls.results[0]).then(function(){
-    cb();
-  }).catch(function(err){
-    cb(err);
-  });
+  // finder.find(urls.results[0]).then(function(){
+  //   cb();
+  // }).catch(function(err){
+  //   cb(err);
+  // });
 
 }).catch(function(err){
-  console.log('a1')
   console.log(err);
 });

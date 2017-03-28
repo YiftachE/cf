@@ -1,10 +1,13 @@
-var scraper = require('google-search-scraper');
-var solver = require('./2captchaSolver.js')
+var solver = require('./2captchaSolver.js');
+const driver = require('selenium-webdriver');
+const {Builder, By, until} = require('selenium-webdriver');
+
+
 // DeathByCaptcha = require("deathbycaptcha");
 // var dbc = new DeathByCaptcha("Jsinger@zdhconsulting.com", "67araydeathbycaptcha");
 
 var options = {
-  limit: 10,
+  limit: 100,
   solver:solver
 };
 
@@ -12,27 +15,42 @@ var searcher = {};
 searcher.search = function(keyword) {
   options.query = keyword;
   return new Promise(function(resolve,reject) {
-    var results = [];
-    var errors = [];
-    scraper.search(options, function(err, url) {
-      if(err) {
-        console.log(err)
-      }
-      else {
-        results.push(url)
-      };
-      // if(results.length + errors.length == options.limit) {
-      //   resolve({results:results,errors:errors});
-      // }
-      resolve({results:['http://www.nirel.org.il/',
-                        'https://www.goodreads.com/author/show/15413697.Nirel',
-                        'http://www.babynamespedia.com/meaning/Nirel/m',
-                        'http://www.saavn.com/s/album/tulu/Nirel-2015/YKYJL8VlOZM_',
-                        'https://wn.com/Nirel',
-                        'http://www.bellevision.com/belle/index.php?action=topnews&type=5845',
-                        'http://nirel.deviantart.com/',]
-            })
+    let browser = new Builder()
+        .forBrowser('chrome')
+        .build();
+    browser.get("http://www.google.com");
+    browser.findElement(By.name('q')).sendKeys(keyword,driver.Key.RETURN);
+    var chain = Promise.resolve([]);
+      for(let i = 0; i < (options.limit/9);i++) {
+          chain = chain.then(function (allLinks) {
+              console.log(i)
+              return new Promise(function(resolve,reject) {
+                findLinks(browser).then(function (links) {
+                    browser.findElement(By.css("td.navend > a.pn")).click();
+                    resolve(allLinks.concat(links));
+                }).catch(function(err){
+                    reject(err);
+                })
+            });
+        }).catch(function (err) {
+            reject(err);
+          });
+    }
+    chain.then(function(links){
+        browser.quit();
+        console.log(links);
+        resolve(links)
+    }).catch(function (err) {
+        reject(err);
     });
   });
-}
- module.exports = searcher;
+};
+
+var findLinks = function (browser) {
+        browser.wait(until.elementLocated(By.css("h3.r > a")),30000);
+        return browser.findElements(By.css("h3.r > a")).then(function(elems){
+            const linksPromises = elems.map(elem =>elem.getAttribute("href"));
+            return Promise.all(linksPromises)
+        });
+};
+module.exports = searcher;
