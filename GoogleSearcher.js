@@ -21,9 +21,17 @@ searcher.search = function(keyword) {
       else {
         results.push(url)
       };
-      if(results.length + errors.length == options.limit) {
-        resolve({results:results,errors:errors});
-      }
+      // if(results.length + errors.length == options.limit) {
+      //   resolve({results:results,errors:errors});
+      // }
+      resolve({results:['http://www.nirel.org.il/',
+                        'https://www.goodreads.com/author/show/15413697.Nirel',
+                        'http://www.babynamespedia.com/meaning/Nirel/m',
+                        'http://www.saavn.com/s/album/tulu/Nirel-2015/YKYJL8VlOZM_',
+                        'https://wn.com/Nirel',
+                        'http://www.bellevision.com/belle/index.php?action=topnews&type=5845',
+                        'http://nirel.deviantart.com/',]
+            })
     });
   });
 }
