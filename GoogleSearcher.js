@@ -7,7 +7,7 @@ const {Builder, By, until} = require('selenium-webdriver');
 // var dbc = new DeathByCaptcha("Jsinger@zdhconsulting.com", "67araydeathbycaptcha");
 
 var options = {
-  limit: 100,
+  limit: 10,
   solver:solver
 };
 

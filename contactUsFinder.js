@@ -11,17 +11,22 @@ finder.find = function(url) {
     request(url, function(error, response, html){
             // First we'll check to make sure no errors occurred when making the request
             if(!error){
-              console.log(html);
                 // Next, we'll utilize the cheerio library on the returned html which will essentially give us jQuery functionality
                 var $ = cheerio.load(html);
-
-              
+                var shit = $('a:contains("contact")');
+                if (shit.length > 0) {
+                    
+                }
+                console.log(shit)
             } else {
               reject(error);
             }
         })
   })
+};
 
-}
+var searchForm = function () {
+
+};
 
 module.exports = finder;
