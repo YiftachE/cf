@@ -1,22 +1,25 @@
-var searcher = require('./googleSearcher.js');
-var finder = require('./contactUsFinder.js');
-var async = require('async')
+const searcher = require('./googleSearcher.js');
+const finder = require('./contactUsFinder.js');
+const async = require('async');
 
-searcher.search('digital marketing').then(function(urls) {
-  async.each(urls,function(url,cb){
-    finder.find(url).then(function(){
-      cb();
-    }).catch(function(err){
-      cb(err);
+searcher.search('digital marketing').then(function (urls) {
+    console.log('there are ' + urls.length + ' pages');
+    async.each(urls, function (url, cb) {
+        finder.find(url).then(function () {
+            console.log('url:' + url + " sent!");
+            cb();
+        }).catch(function (err) {
+            const error = new Error('url:' + url + " " + err);
+            console.log(error);
+            cb(error);
+        });
+    }, function (err) {
+        if (err) {
+            console.log('not all pages finished');
+        } else {
+            console.log('all pages finshed');
+        }
     });
-  },function(err){
-    if(err) {
-      console.log('a2')
-      console.log(err);
-    } else {
-      console.log('all pages finshed');
-    }
-  });
-}).catch(function(err){
-  console.log(err);
+}).catch(function (err) {
+    console.log(err);
 });
