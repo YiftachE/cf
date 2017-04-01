@@ -7,7 +7,7 @@ const {Builder, By, until} = require('selenium-webdriver');
 // var dbc = new DeathByCaptcha("Jsinger@zdhconsulting.com", "67araydeathbycaptcha");
 
 var options = {
-    limit: 100,
+    limit: 10,
     solver: solver
 };
 
@@ -51,7 +51,7 @@ searcher.search = function (keyword) {
     });
 };
 
-var findLinks = function (browser) {
+const findLinks = function (browser) {
     browser.wait(until.elementLocated(By.css("h3.r > a")), 30000);
     return browser.findElements(By.css("h3.r > a")).then(function (elems) {
         const linksPromises = elems.map(elem => elem.getAttribute("href"));
