@@ -31,6 +31,9 @@ utils.exceptions.SubmitExcpetion = function NoContactException(moreInfo,internal
     this.text = `Couldn't submit form-${moreInfo}`;
     this.internalException = internal_exception;
 };
+utils.exceptions.NoMoreResultsException = function NoMoreResultsException(results) {
+    this.results = results;
+};
 
 utils.other.getHostName = function (url) {
     const hostname = URL.parse(url).hostname;

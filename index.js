@@ -4,7 +4,7 @@ const async = require('async');
 const utils = require('./utils.js');
 
 
-searcher.search('digital marketing').then(function (urls) {
+searcher.search('eden').then(function (urls) {
     console.log('there are ' + urls.length + ' pages');
     async.each(urls, function (url, cb) {
         shouldVisitHost(utils.other.getHostName(url))
@@ -35,7 +35,7 @@ searcher.search('digital marketing').then(function (urls) {
         }
     });
 }).catch(function (err) {
-    console.log(err);
+    // console.log(err);
 });
 
 
