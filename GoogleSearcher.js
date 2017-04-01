@@ -7,7 +7,7 @@ const {Builder, By, until} = require('selenium-webdriver');
 // var dbc = new DeathByCaptcha("Jsinger@zdhconsulting.com", "67araydeathbycaptcha");
 
 var options = {
-    limit: 10,
+    limit: 400,
     solver: solver
 };
 
@@ -31,8 +31,10 @@ searcher.search = function (keyword) {
                 console.log(i);
                 return new Promise(function (resolve, reject) {
                     findLinks(browser).then(function (links) {
-                        browser.findElement(By.css("td.navend > a.pn")).click();
-                        resolve(allLinks.concat(links));
+                        browser.findElement(By.css("td:last-of-type.navend > a.pn")).click();
+                        setTimeout(function () {
+                            resolve(allLinks.concat(links));
+                        },2000);
                     }).catch(function (err) {
                         reject(err);
                     })
