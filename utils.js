@@ -39,5 +39,9 @@ utils.other.getHostName = function (url) {
     const hostname = URL.parse(url).hostname;
     return hostname.indexOf('www.') && hostname || hostname.replace('www.', '');
 };
+utils.other.promiseSerial = funcs =>
+    funcs.reduce((promise, func) =>
+            promise.then(result => func().then(Array.prototype.concat.bind(result))),
+        Promise.resolve([]));
 
 module.exports = utils;

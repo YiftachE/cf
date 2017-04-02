@@ -4,7 +4,8 @@ const async = require('async');
 const utils = require('./utils.js');
 
 
-searcher.search('eden').then(function (urls) {
+searcher.search(['eden','king']).then(function (urls) {
+    console.log(urls);
     console.log('there are ' + urls.length + ' pages');
     async.each(urls, function (url, cb) {
         shouldVisitHost(utils.other.getHostName(url))
@@ -35,7 +36,7 @@ searcher.search('eden').then(function (urls) {
         }
     });
 }).catch(function (err) {
-    // console.log(err);
+    console.log(err);
 });
 
 

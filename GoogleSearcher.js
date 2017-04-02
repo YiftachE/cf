@@ -12,8 +12,15 @@ var options = {
 };
 
 var searcher = {};
-searcher.search = function (keyword) {
-    options.query = keyword;
+searcher.search = function (keywords) {
+    const promises = [];
+    for(let word of keywords) {
+        promises.push(searchKeyword.bind(this,word));
+    }
+    return utils.other.promiseSerial(promises);
+};
+
+const searchKeyword = function (keyword) {
     return new Promise(function (resolve, reject) {
         const chromeCapabilities = driver.Capabilities.chrome();
         const chromeOptions = {
@@ -34,9 +41,7 @@ searcher.search = function (keyword) {
                         browser.findElement(By.css("td:last-of-type.navend > a.pn"))
                             .then(function (element) {
                                 element.click();
-                                setTimeout(function () {
-                                    resolve(allLinks.concat(links));
-                                },2000);
+                                resolve(allLinks.concat(links));
                             }).catch(function (err) {
                             if (err.name && err.name === 'NoSuchElementError' && allLinks) {
                                 reject(new utils.exceptions.NoMoreResultsException(allLinks.concat(links)));
@@ -77,21 +82,43 @@ searcher.search = function (keyword) {
 
 const findLinks = function (browser) {
     return new Promise(function (resolve, reject) {
-        browser.wait(until.elementLocated(By.css("td.navend > a.pn")),10000000)
-            .then(function () {
-                browser.findElements(By.css("h3.r > a")).then(function (elems) {
-                    if (elems.length === 0) {
-                        reject("LastPage");
-                    } else {
-                        const linksPromises = elems.map(elem => elem.getAttribute("href"));
-                        Promise.all(linksPromises).then(links=>resolve(links)).catch(err=>reject(err));
-                    }
-                }).catch(function (err) {
-                    reject(err);
-                });
-            }).catch(function (err) {
-            reject(err)
-        });
+        browser.getCurrentUrl()
+            .then(function (url) {
+                if (url.includes("sorry")) {
+                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")),10000000)
+                        .then(function () {
+                            browser.findElements(By.css("h3.r > a")).then(function (elems) {
+                                if (elems.length === 0) {
+                                    reject("LastPage");
+                                } else {
+                                    const linksPromises = elems.map(elem => elem.getAttribute("href"));
+                                    Promise.all(linksPromises).then(links=>resolve(links)).catch(err=>reject(err));
+                                }
+                            }).catch(function (err) {
+                                reject(err);
+                            });
+                        }).catch(function (err) {
+                        reject(err)
+                    });
+                } else {
+                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")),10000)
+                        .then(function () {
+                            browser.findElements(By.css("h3.r > a")).then(function (elems) {
+                                if (elems.length === 0) {
+                                    reject("LastPage");
+                                } else {
+                                    const linksPromises = elems.map(elem => elem.getAttribute("href"));
+                                    Promise.all(linksPromises).then(links=>resolve(links)).catch(err=>reject(err));
+                                }
+                            }).catch(function (err) {
+                                reject(err);
+                            });
+                        }).catch(function (err) {
+                        reject(err)
+                    });
+
+                }
+            }).catch(err=>reject(err));
     });
 };
 module.exports = searcher;

@@ -28,7 +28,7 @@ finder.find = function (url) {
                     for (let i = 0; i < elements.length; i++) {
                         promises.push(goToContact.bind(this, i, browser,url));
                     }
-                    promiseSerial(promises)
+                    utils.other.promiseSerial(promises)
                         .then(function () {
                             const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
                             utils.selenium.takeScreenshot(browser,pictureName)
@@ -55,7 +55,7 @@ finder.find = function (url) {
     })
 };
 
-let searchForm = function (browser) {
+const searchForm = function (browser) {
     return new Promise(function (resolve, reject) {
         browser.findElements(By.css("form[id*='contact']")).then(function (elements) {
             if (elements.length === 0) {
@@ -87,7 +87,7 @@ let searchForm = function (browser) {
     });
 
 };
-let fillForm = function (inputs) {
+const fillForm = function (inputs) {
     let promises = [];
     for (let input of inputs) {
         promises.push(new Promise(function (resolve, reject) {
@@ -122,9 +122,9 @@ let fillForm = function (inputs) {
             })
         }));
     }
-    return promiseSerial(promises);
+    return utils.other.promiseSerial(promises);
 };
-let goToContact = function (index, browser,url) {
+const goToContact = function (index, browser,url) {
     return new Promise(function (resolve, reject) {
         browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"))
             .then(function (elements) {
@@ -138,10 +138,5 @@ let goToContact = function (index, browser,url) {
         });
     });
 };
-
-const promiseSerial = funcs =>
-    funcs.reduce((promise, func) =>
-            promise.then(result => func().then(Array.prototype.concat.bind(result))),
-        Promise.resolve([]));
 
 module.exports = finder;
