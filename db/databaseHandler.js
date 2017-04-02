@@ -99,15 +99,48 @@ const Promise = require('promise');
   //   }
 
   handler.createBlackListModel = function(){
-    var BlackListModel = sequelize.define('blackListModel', {
-      siteLink: {
-        type: DataTypes.STRING,
-      }
-    }, {
-      freezeTableName: true // Model tableName will be the same as the model name
-    });
+    return new Promise(function(fulfill, reject){
+        handler.create().then(function(sequelize){
+        console.log('created sequelize');
 
-    return BlackListModel;
+        var BlackListModel = sequelize.define('blackList', {
+          site: {
+            type: DataTypes.STRING
+          }
+        }, {
+          freezeTableName: true // Model tableName will be the same as the model name
+        });
+
+        sequelize.sync().then(function() {
+          if(BlackListModel){
+            fulfill(BlackListModel);
+          }else {
+            reject('couldnt create campaign & searchWords model');
+          }
+        })
+        .catch(function (err) {
+            console.log(err);
+        });
+    });
+    });
+  }
+
+  handler.addToBlackList = function (BlackListModel, data) {
+      return new Promise(function(fulfill, reject) {
+        if(BlackListModel){
+            BlackListModel.create({
+                site: data.site
+            })
+            .then(function (blackListedSite) {
+                fulfill();
+            })
+            .catch(function (err) {
+                if(err){
+                    reject(err);
+                }
+            });
+        }
+      });
   }
 
   // handler.addNewCampaign = function(CampaignModel ,data){

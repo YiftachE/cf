@@ -30,6 +30,16 @@ app.post('/newProject', function(req, res){
   });
 });
 
+app.post('/addToBlackList', function (req, res) {
+   database.createBlackListModel().then(function (model) {
+        console.log('created black list model');
+        database.addToBlackList(model, {site: req.body.site}).then(function () {
+            console.log('added succefully to the black list');
+            res.send('ok');
+        });
+   });
+});
+
 handler.listen = function(){
   app.listen(3001);
   console.log('server is listening on port 3001');
