@@ -176,6 +176,79 @@ const Promise = require('promise');
               });
       });
   }
+
+handler.createPrivateBlackList = function(){
+    return new Promise(function(fulfill, reject){
+        handler.create().then(function(sequelize){
+            console.log('created sequelize');
+
+            var PrivateBlackListModel = sequelize.define('privateBlackList', {
+                site: {
+                    type: DataTypes.STRING
+                },
+                campaign: {
+                    type: DataTypes.STRING
+                }
+            }, {
+                freezeTableName: true // Model tableName will be the same as the model name
+            });
+
+            sequelize.sync().then(function() {
+                if(PrivateBlackListModel){
+                    fulfill(PrivateBlackListModel);
+                }else {
+                    reject('couldnt create campaign & searchWords model');
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+            });
+        });
+    });
+}
+
+handler.addToPrivateBlackList= function (PrivateBlackListModel, data) {
+    return new Promise(function(fulfill, reject) {
+        if(PrivateBlackListModel){
+            PrivateBlackListModel.create({
+                site: data.site,
+                campaign: data.campaign
+            })
+            .then(function (PrivateBlackListModel) {
+                fulfill();
+            })
+            .catch(function (err) {
+                if(err){
+                    reject(err);
+                }
+            });
+        }
+    });
+}
+
+
+handler.checkIfSiteBlockedForCampaign = function (PrivateBlackListModel, site, campaign) {
+    return new Promise(function(fulfill, reject) {
+            PrivateBlackListModel.findAll({
+                where: {
+                    campaign: campaign,
+                    site: site
+                }
+            })
+            .then(function (site) {
+                console.log(site);
+                if(site.length > 0){
+                    fulfill(true);
+                }else{
+                    fulfill(false);
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
   // handler.addNewCampaign = function(CampaignModel ,data){
   //   return new Promise(function(fulfill, reject){
   //     if(CampaignModel){
