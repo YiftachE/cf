@@ -99,17 +99,156 @@ const Promise = require('promise');
   //   }
 
   handler.createBlackListModel = function(){
-    var BlackListModel = sequelize.define('blackListModel', {
-      siteLink: {
-        type: DataTypes.STRING,
-      }
-    }, {
-      freezeTableName: true // Model tableName will be the same as the model name
-    });
+    return new Promise(function(fulfill, reject){
+        handler.create().then(function(sequelize){
+        console.log('created sequelize');
 
-    return BlackListModel;
+        var BlackListModel = sequelize.define('blackList', {
+          site: {
+            type: DataTypes.STRING
+          }
+        }, {
+          freezeTableName: true // Model tableName will be the same as the model name
+        });
+
+        sequelize.sync().then(function() {
+          if(BlackListModel){
+            fulfill(BlackListModel);
+          }else {
+            reject('couldnt create campaign & searchWords model');
+          }
+        })
+        .catch(function (err) {
+            console.log(err);
+        });
+    });
+    });
   }
 
+  handler.addToBlackList = function (BlackListModel, data) {
+      return new Promise(function(fulfill, reject) {
+        if(BlackListModel){
+            BlackListModel.create({
+                site: data.site
+            })
+            .then(function (blackListedSite) {
+                fulfill();
+            })
+            .catch(function (err) {
+                if(err){
+                    reject(err);
+                }
+            });
+        }
+      });
+  }
+
+
+  handler.checkExists = function (BlackListModel, site) {
+      return new Promise(function(fulfill, reject) {
+          BlackListModel.findOne({where: {site: site}}).then(function (project) {
+              if (project) {
+                fulfill(true);
+              }else{
+                  fulfill(false);
+              }
+          })
+          .catch(function (err) {
+              console.log(err);
+              reject(err);
+          });
+      });
+  }
+
+  handler.getAllBlackList = function (BlackListModel) {
+      return new Promise(function(fulfill, reject) {
+          BlackListModel.findAll({})
+              .then(function (sites) {
+                  console.log(sites);
+                  justSites = sites.map(function (site) {
+                      return site.site;
+                  });
+                  fulfill(justSites );
+              })
+              .catch(function (err) {
+                  console.log(err);
+                  reject(err);
+              });
+      });
+  }
+
+handler.createPrivateBlackList = function(){
+    return new Promise(function(fulfill, reject){
+        handler.create().then(function(sequelize){
+            console.log('created sequelize');
+
+            var PrivateBlackListModel = sequelize.define('privateBlackList', {
+                site: {
+                    type: DataTypes.STRING
+                },
+                campaign: {
+                    type: DataTypes.STRING
+                }
+            }, {
+                freezeTableName: true // Model tableName will be the same as the model name
+            });
+
+            sequelize.sync().then(function() {
+                if(PrivateBlackListModel){
+                    fulfill(PrivateBlackListModel);
+                }else {
+                    reject('couldnt create campaign & searchWords model');
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+            });
+        });
+    });
+}
+
+handler.addToPrivateBlackList= function (PrivateBlackListModel, data) {
+    return new Promise(function(fulfill, reject) {
+        if(PrivateBlackListModel){
+            PrivateBlackListModel.create({
+                site: data.site,
+                campaign: data.campaign
+            })
+            .then(function (PrivateBlackListModel) {
+                fulfill();
+            })
+            .catch(function (err) {
+                if(err){
+                    reject(err);
+                }
+            });
+        }
+    });
+}
+
+
+handler.checkIfSiteBlockedForCampaign = function (PrivateBlackListModel, site, campaign) {
+    return new Promise(function(fulfill, reject) {
+            PrivateBlackListModel.findAll({
+                where: {
+                    campaign: campaign,
+                    site: site
+                }
+            })
+            .then(function (site) {
+                console.log(site);
+                if(site.length > 0){
+                    fulfill(true);
+                }else{
+                    fulfill(false);
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+                reject(err);
+            });
+    });
+}
   // handler.addNewCampaign = function(CampaignModel ,data){
   //   return new Promise(function(fulfill, reject){
   //     if(CampaignModel){

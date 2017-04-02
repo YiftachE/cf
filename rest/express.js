@@ -44,9 +44,59 @@ app.post('/newProject', function (req, res) {
     });
 });
 
-handler.listen = function () {
-    app.listen(3001);
-    console.log('server is listening on port 3001');
-};
+app.post('/addToBlackList', function (req, res) {
+   database.createBlackListModel().then(function (model) {
+        console.log('created black list model');
+        database.addToBlackList(model, {site: req.body.site}).then(function () {
+            console.log('added succefully to the black list');
+            res.send('ok');
+        });
+   });
+});
+
+app.get('/checkExists', function (req, res) {
+    database.createBlackListModel().then(function (model) {
+        console.log('created black list model');
+        database.checkExists(model, req.query.site).then(function (exists) {
+            console.log(exists);
+            res.send(exists);
+        });
+    });
+});
+
+app.get('/getAllBlackList', function (req, res) {
+    database.createBlackListModel().then(function (model) {
+        console.log('created black list model');
+        database.getAllBlackList(model).then(function (sites) {
+            console.log(sites);
+            res.send(sites);
+        });
+    });
+});
+
+app.post('/addToPrivateBlackList', function (req, res) {
+    database.createPrivateBlackList().then(function (model) {
+        console.log('created private black list model');
+        database.addToPrivateBlackList(model, {site: req.body.site, campaign: req.body.campaign}).then(function () {
+            console.log('added succefully to the private black list');
+            res.send('ok');
+        });
+    });
+});
+
+app.get('/checkIfSiteBlockedForCampaign', function (req, res) {
+    database.createPrivateBlackList().then(function (model) {
+        console.log('created private black list model');
+        database.checkIfSiteBlockedForCampaign(model, req.query.site, req.query.campaign).then(function (exists) {
+            console.log('added succefully to the private black list');
+            res.send(exists);
+        });
+    });
+});
+
+handler.listen = function(){
+  app.listen(3001);
+  console.log('server is listening on port 3001');
+}
 
 module.exports = handler;
