@@ -159,6 +159,23 @@ const Promise = require('promise');
           });
       });
   }
+
+  handler.getAllBlackList = function (BlackListModel) {
+      return new Promise(function(fulfill, reject) {
+          BlackListModel.findAll({})
+              .then(function (sites) {
+                  console.log(sites);
+                  justSites = sites.map(function (site) {
+                      return site.site;
+                  });
+                  fulfill(justSites );
+              })
+              .catch(function (err) {
+                  console.log(err);
+                  reject(err);
+              });
+      });
+  }
   // handler.addNewCampaign = function(CampaignModel ,data){
   //   return new Promise(function(fulfill, reject){
   //     if(CampaignModel){
