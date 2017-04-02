@@ -9,14 +9,18 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "2captcha": "^1.0.11",
     "async": "^2.1.5",
     "body-parser": "^1.17.1",
     "cors": "^2.8.1",
+    "deathbycaptcha": "0.0.3",
     "express": "^4.15.2",
-    "google": "^2.1.0",
+    "google-search-scraper": "0.0.3",
     "mysql": "^2.13.0",
     "promise": "^7.1.1",
     "selenium-webdriver": "^3.3.0",
-    "sequelize": "^3.30.4"
+    "sequelize": "^3.30.4",
+    "task.js": "0.0.22",
+    "winston": "^2.3.1"
   }
 }
