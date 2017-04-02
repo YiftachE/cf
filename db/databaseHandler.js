@@ -143,6 +143,22 @@ const Promise = require('promise');
       });
   }
 
+
+  handler.checkExists = function (BlackListModel, site) {
+      return new Promise(function(fulfill, reject) {
+          BlackListModel.findOne({where: {site: site}}).then(function (project) {
+              if (project) {
+                fulfill(true);
+              }else{
+                  fulfill(false);
+              }
+          })
+          .catch(function (err) {
+              console.log(err);
+              reject(err);
+          });
+      });
+  }
   // handler.addNewCampaign = function(CampaignModel ,data){
   //   return new Promise(function(fulfill, reject){
   //     if(CampaignModel){

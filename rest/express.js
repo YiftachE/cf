@@ -40,6 +40,16 @@ app.post('/addToBlackList', function (req, res) {
    });
 });
 
+app.get('/checkExists', function (req, res) {
+    database.createBlackListModel().then(function (model) {
+        console.log('created black list model');
+        database.checkExists(model, req.query.site).then(function (exists) {
+            console.log(exists);
+            res.send(exists);
+        });
+    });
+});
+
 handler.listen = function(){
   app.listen(3001);
   console.log('server is listening on port 3001');
