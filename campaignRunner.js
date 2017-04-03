@@ -10,16 +10,22 @@ const winston = require('winston');
 const runner = {};
 
 runner.run = function (campaign) {
+    const curTime = Date.now();
     const logger = new (winston.Logger)({
         transports: [
             new (winston.transports.Console)(),
-            new (winston.transports.File)({ filename: `./logs/${campaign.title}-${Date.now()}.log`})
+            new (winston.transports.File)({ filename: `./logs/${campaign.title}-${curTime}.log`})
         ]
     });
+    const reportData = {};
+    reportData.cfSentNumber = 0;
+    reportData.noCfNumber = 0;
+    reportData.blockedByBLNumber = 0;
     finder.logger = logger;
     searcher.logger = logger;
     logger.info('Started running...');
     searcher.search(campaign.keywords,campaign.limit).then(function (urls) {
+        reportData.sitesVisitedNumber = urls.length;
         console.log(urls);
         console.log('there are ' + urls.length + ' pages');
         // TODO: change this to parallel
@@ -27,14 +33,22 @@ runner.run = function (campaign) {
             shouldVisitHost(utils.other.getHostName(url))
                 .then(function (shouldVisit) {
                     if (!shouldVisit) {
+                        reportData.blockedByBLNumber +=1;
                         cb("Already visited host");
                     } else {
                         finder.find(url,campaign)
                             .then(function () {
                                 addToBlacklist(url);
-                                console.log('url:' + url + " sent!");
+                                reportData.cfSentNumber +=1;
+                                logger.info('url:' + url + " sent!");
                                 cb();
                             }).catch(function (err) {
+                            // if (err & err.text === "Couldn't find form") {
+                            //
+                            // } else if (err & err.text === "Couldn't find contact us") {
+                            //
+                            // }
+                            reportData.noCfNumber +=1;
                             const error = new Error('url:' + url + " " + JSON.stringify(err));
                             logger.error(error);
                             cb(error);
@@ -52,6 +66,7 @@ runner.run = function (campaign) {
                 console.log('check2');
                 logger.info("all pages finshed");
             }
+            utils.other.createReport(reportData,curTime,campaign.title);
         });
     }).catch(function (err) {
         logger.error(JSON.stringify(err));

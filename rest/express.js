@@ -21,7 +21,7 @@ app.get('/', function (req, res) {
 app.post('/start', function (req, res) {
     winston.info("/start called");
     // const campaign = req.body.campaign;
-    const limit = req.body.limit;
+    // const limit = req.body.limit;
 
     const campaign = {
         keywords:['digital marketing'],

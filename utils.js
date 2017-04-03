@@ -6,19 +6,20 @@ const URL = require('url');
 const mkdirp = require('mkdirp');
 const getDirName = require('path').dirname;
 const utils = {};
+const winston = require('winston');
 utils.selenium = {};
 utils.exceptions = {};
 utils.other = {};
 
-utils.selenium.takeScreenshot = function (browser,name) {
+utils.selenium.takeScreenshot = function (browser, name) {
     return new Promise(function (resolve, reject) {
-        browser.takeScreenshot().then(function(data){
-            const base64Data = data.replace(/^data:image\/png;base64,/,"");
+        browser.takeScreenshot().then(function (data) {
+            const base64Data = data.replace(/^data:image\/png;base64,/, "");
             mkdirp(getDirName(name), function (err) {
-                if(err) {
+                if (err) {
                     reject(err);
                 } else {
-                    fs.writeFile(`${name}.png`, base64Data, 'base64', function(err) {
+                    fs.writeFile(`${name}.png`, base64Data, 'base64', function (err) {
                         err ? reject(err) : resolve();
                     });
                 }
@@ -36,7 +37,7 @@ utils.exceptions.NoContactException = function NoContactException(internal_excep
     this.text = "Couldn't find contact us";
     this.internalException = internal_exception;
 };
-utils.exceptions.SubmitExcpetion = function NoContactException(moreInfo,internal_exception) {
+utils.exceptions.SubmitExcpetion = function NoContactException(moreInfo, internal_exception) {
     this.text = `Couldn't submit form-${moreInfo}`;
     this.internalException = internal_exception;
 };
@@ -52,5 +53,17 @@ utils.other.promiseSerial = funcs =>
     funcs.reduce((promise, func) =>
             promise.then(result => func().then(Array.prototype.concat.bind(result))),
         Promise.resolve([]));
-
+utils.other.createReport = function (reportData, curTime, title) {
+    fs.writeFile(`./logs/${title}-${curTime}-report.txt`,
+        `Number of sites visited: ${reportData.sitesVisitedNumber}
+         Number of CF sent: ${reportData.cfSentNumber}
+         Number of sites with no CF: ${reportData.noCfNumber}
+         Number of sites that got blocked by Blacklist: ${reportData.blockedByBLNumber}`
+        , function (err) {
+            if (err) {
+                winston.error(err);
+            }
+        }
+    );
+};
 module.exports = utils;
