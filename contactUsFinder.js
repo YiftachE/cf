@@ -22,7 +22,6 @@ finder.find = function (url,campaign) {
                             browser.quit();
                             reject(new utils.exceptions.NoFormException(err));
                     });
-
                 } else {
                     let promises = [];
                     for (let i = 0; i < elements.length; i++) {
