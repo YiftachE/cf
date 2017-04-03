@@ -132,7 +132,7 @@ const Promise = require('promise');
                 site: data.site
             })
             .then(function (blackListedSite) {
-                fulfill();
+                fulfill(blackListedSite);
             })
             .catch(function (err) {
                 if(err){

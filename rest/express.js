@@ -60,9 +60,9 @@ app.post('/newProject', function (req, res) {
 app.post('/addToBlackList', function (req, res) {
    database.createBlackListModel().then(function (model) {
         console.log('created black list model');
-        database.addToBlackList(model, {site: req.body.site}).then(function () {
+        database.addToBlackList(model, {site: req.body.site}).then(function (newSite) {
             console.log('added succefully to the black list');
-            res.send('ok');
+            res.send(newSite);
         });
    });
 });
