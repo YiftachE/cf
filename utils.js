@@ -3,6 +3,8 @@
  */
 const fs = require('fs');
 const URL = require('url');
+const mkdirp = require('mkdirp');
+const getDirName = require('path').dirname;
 const utils = {};
 utils.selenium = {};
 utils.exceptions = {};
@@ -12,9 +14,16 @@ utils.selenium.takeScreenshot = function (browser,name) {
     return new Promise(function (resolve, reject) {
         browser.takeScreenshot().then(function(data){
             const base64Data = data.replace(/^data:image\/png;base64,/,"");
-            fs.writeFile(`${name}.png`, base64Data, 'base64', function(err) {
-                 err ? reject(err) : resolve();
+            mkdirp(getDirName(name), function (err) {
+                if(err) {
+                    reject(err);
+                } else {
+                    fs.writeFile(`${name}.png`, base64Data, 'base64', function(err) {
+                        err ? reject(err) : resolve();
+                    });
+                }
             });
+
         });
     });
 };

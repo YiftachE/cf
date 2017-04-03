@@ -18,9 +18,22 @@ app.get('/', function (req, res) {
     database.create();
 });
 
-app.get('/start', function (req, res) {
+app.post('/start', function (req, res) {
     winston.info("/start called");
-    runner.run(['eden', 'king']);
+    // const campaign = req.body.campaign;
+    const limit = req.body.limit;
+
+    const campaign = {
+        keywords:['digital marketing'],
+        title:'check',
+        firstName:'eden',
+        email:'test@test.com',
+        message:"hello it's me",
+        limit:5,
+        name:'check'
+    };
+    runner.run(campaign);
+    res.sendStatus(200);
 });
 
 app.post('/newProject', function (req, res) {

@@ -6,21 +6,16 @@ const utils = require('./utils.js');
 // DeathByCaptcha = require("deathbycaptcha");
 // var dbc = new DeathByCaptcha("Jsinger@zdhconsulting.com", "67araydeathbycaptcha");
 
-var options = {
-    limit: 50,
-    solver: solver
-};
-
-var searcher = {};
-searcher.search = function (keywords) {
+const searcher = {};
+searcher.search = function (keywords,limit) {
     const promises = [];
     for(let word of keywords) {
-        promises.push(searchKeyword.bind(this,word));
+        promises.push(searchKeyword.bind(this,word,limit));
     }
     return utils.other.promiseSerial(promises);
 };
 
-const searchKeyword = function (keyword) {
+const searchKeyword = function (keyword,limit) {
     return new Promise(function (resolve, reject) {
         const chromeCapabilities = driver.Capabilities.chrome();
         const chromeOptions = {
@@ -33,7 +28,7 @@ const searchKeyword = function (keyword) {
         browser.get("http://www.google.com");
         browser.findElement(By.name('q')).sendKeys(keyword, driver.Key.RETURN);
         var chain = Promise.resolve([]);
-        for (let i = 0; i < (options.limit / 9); i++) {
+        for (let i = 0; i < (limit / 9); i++) {
             chain = chain.then(function (allLinks) {
                 console.log(i);
                 return new Promise(function (resolve, reject) {
@@ -58,7 +53,6 @@ const searchKeyword = function (keyword) {
                     })
                 });
             }).catch(function (err) {
-                // TODO:change string here
                 if (err.constructor.name === "NoMoreResultsException") {
                     resolve(err.results)
                 } else {
@@ -101,7 +95,7 @@ const findLinks = function (browser) {
                         reject(err)
                     });
                 } else {
-                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")),10000)
+                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")),30000)
                         .then(function () {
                             browser.findElements(By.css("h3.r > a")).then(function (elems) {
                                 if (elems.length === 0) {

@@ -16,6 +16,7 @@
     "deathbycaptcha": "0.0.3",
     "express": "^4.15.2",
     "google-search-scraper": "0.0.3",
+    "mkdirp": "^0.5.1",
     "mysql": "^2.13.0",
     "promise": "^7.1.1",
     "selenium-webdriver": "^3.3.0",

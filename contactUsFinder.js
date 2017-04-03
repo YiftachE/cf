@@ -4,7 +4,7 @@ const utils = require('./utils.js');
 
 let finder = {};
 
-finder.find = function (url) {
+finder.find = function (url,campaign) {
     return new Promise(function (resolve, reject) {
         let browser = new Builder()
             .forBrowser('chrome')
@@ -13,7 +13,7 @@ finder.find = function (url) {
         browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"))
             .then(function (elements) {
                 if (elements.length === 0) {
-                    const pictureName = `./sc/NoContact-${utils.other.getHostName(url)}`;
+                    const pictureName = `./sc/${campaign.name}/NoContact-${utils.other.getHostName(url)}`;
                     utils.selenium.takeScreenshot(browser,pictureName)
                         .then(function () {
                             browser.quit();
@@ -26,7 +26,7 @@ finder.find = function (url) {
                 } else {
                     let promises = [];
                     for (let i = 0; i < elements.length; i++) {
-                        promises.push(goToContact.bind(this, i, browser,url));
+                        promises.push(goToContact.bind(this, i, browser,url,campaign));
                     }
                     utils.other.promiseSerial(promises)
                         .then(function () {
@@ -37,7 +37,7 @@ finder.find = function (url) {
                                     console.log('url:' + url + " success!");
                                     resolve()
                                 }).catch(function (err) {
-                                // TODO : log error here
+                                finder.logger.error(err);
                                 browser.quit();
                                 console.log('url:' + url + " success!");
                                 resolve()
@@ -55,7 +55,7 @@ finder.find = function (url) {
     })
 };
 
-const searchForm = function (browser) {
+const searchForm = function (browser,campaign) {
     return new Promise(function (resolve, reject) {
         browser.findElements(By.css("form[id*='contact']")).then(function (elements) {
             if (elements.length === 0) {
@@ -63,7 +63,7 @@ const searchForm = function (browser) {
             } else {
                 // Check what happens when theres multiple forms
                 browser.findElements(By.css("form[id*='contact'] input,form[id*='contact'] textarea")).then(function (inputs) {
-                    fillForm(inputs);
+                    fillForm(inputs,campaign);
                     inputs[0].submit().then(function () {
                         // TODO : try to avoid this setTimeout
                         setTimeout(function () {
@@ -87,22 +87,22 @@ const searchForm = function (browser) {
     });
 
 };
-const fillForm = function (inputs) {
+const fillForm = function (inputs,campaign) {
     let promises = [];
     for (let input of inputs) {
         promises.push(new Promise(function (resolve, reject) {
             input.getTagName().then(function (tagName) {
                 if (tagName === "textarea") {
-                    input.sendKeys("hello this is me");
+                    input.sendKeys(campaign.message);
                 } else {
                     input.getAttribute("type").then(function (type) {
                         if (type === "text") {
                             input.getAttribute("name").then(function (name) {
                                 const lcName = name.toLowerCase();
                                 if (lcName.includes("name")) {
-                                    input.sendKeys("test");
+                                    input.sendKeys(campaign.firstName);
                                 } else if (lcName.includes("email")) {
-                                    input.sendKeys("test@test.com")
+                                    input.sendKeys(campaign.email)
                                 } else {
                                     console.log('input didn\'t match anything:' + name);
                                 }
@@ -124,13 +124,13 @@ const fillForm = function (inputs) {
     }
     return utils.other.promiseSerial(promises);
 };
-const goToContact = function (index, browser,url) {
+const goToContact = function (index, browser,url,campaign) {
     return new Promise(function (resolve, reject) {
         browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"))
             .then(function (elements) {
                 elements[index].click();
-                searchForm(browser).then(_ => resolve()).catch(err => {
-                    const pictureName = `./sc/NoForm-${utils.other.getHostName(url)}`;
+                searchForm(browser,campaign).then(_ => resolve()).catch(err => {
+                    const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
                     utils.selenium.takeScreenshot(browser,pictureName).then(_=>reject(err)).catch(_=>reject(err));
                 });
             }).catch(function (err) {
