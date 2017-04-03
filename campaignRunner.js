@@ -6,6 +6,7 @@ const finder = require('./contactUsFinder.js');
 const async = require('async');
 const utils = require('./utils.js');
 const winston = require('winston');
+const database = require('./db/databaseHandler');
 
 const runner = {};
 
@@ -30,7 +31,7 @@ runner.run = function (campaign,limit) {
         console.log('there are ' + urls.length + ' pages');
         // TODO: change this to parallel
         async.map(urls, async.reflect(function (url, cb) {
-            shouldVisitHost(utils.other.getHostName(url))
+            shouldVisitHost(utils.other.getHostName(url),campaign)
                 .then(function (shouldVisit) {
                     if (!shouldVisit) {
                         reportData.blockedByBLNumber +=1;
@@ -38,7 +39,7 @@ runner.run = function (campaign,limit) {
                     } else {
                         finder.find(url,campaign)
                             .then(function () {
-                                addToBlacklist(url);
+                                addToBlacklist(url,campaign);
                                 reportData.cfSentNumber +=1;
                                 logger.info('url:' + url + " sent!");
                                 cb();
@@ -55,6 +56,7 @@ runner.run = function (campaign,limit) {
                         });
                     }
                 }).catch(function (err) {
+                    console.log(err)
                 cb(err)
             });
 
@@ -68,15 +70,27 @@ runner.run = function (campaign,limit) {
 };
 
 
-const shouldVisitHost = function (hostname) {
+const shouldVisitHost = function (hostname,campaign) {
     return new Promise(function (resolve, reject) {
-        resolve(true);
+        database.createBlackListModel().then(function (model) {
+            database.checkExists(model, hostname).then(function (existsInGeneral) {
+                database.createPrivateBlackList().then(function (model) {
+                    database.checkIfSiteBlockedForCampaign(model, hostname, campaign.title).then(function (existsInCampaign) {
+                        resolve (!existsInCampaign && !existsInGeneral)
+                    }).catch(err=>console.log());
+                }).catch(err=>console.log(err));
+            }).catch(err=>console.log(err));
+        }).catch(err=>console.log(err));
     });
 };
-const addToBlacklist = function (url) {
+const addToBlacklist = function (url,campaign) {
     const hosname = utils.other.getHostName(url);
     return new Promise(function (resolve, reject) {
-        resolve();
+        database.createPrivateBlackList().then(function (model) {
+            database.addToPrivateBlackList(model, {site: hosname, campaign: campaign.title}).then(function () {
+                resolve();
+            }).catch(err=>reject(err));
+        }).catch(err=>reject(err));
     });
 };
 

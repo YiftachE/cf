@@ -20,7 +20,7 @@ const Promise = require('promise');
         reject();
       }
     });
-  }
+  };
 
   // handler.createCampaignsModel = function(){
   //     return new Promise(function(fulfill, reject){
@@ -119,6 +119,7 @@ const Promise = require('promise');
           }
         })
         .catch(function (err) {
+            reject(err);
             console.log(err);
         });
     });
@@ -135,9 +136,7 @@ const Promise = require('promise');
                 fulfill(blackListedSite);
             })
             .catch(function (err) {
-                if(err){
-                    reject(err);
-                }
+                reject(err);
             });
         }
       });
@@ -202,10 +201,13 @@ handler.createPrivateBlackList = function(){
             })
             .catch(function (err) {
                 console.log(err);
+                reject(err);
             });
+        }).catch(function (err) {
+            reject(err);
         });
     });
-}
+};
 
 handler.addToPrivateBlackList= function (PrivateBlackListModel, data) {
     return new Promise(function(fulfill, reject) {
@@ -218,9 +220,7 @@ handler.addToPrivateBlackList= function (PrivateBlackListModel, data) {
                 fulfill();
             })
             .catch(function (err) {
-                if(err){
-                    reject(err);
-                }
+                reject(err);
             });
         }
     });
