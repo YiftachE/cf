@@ -29,7 +29,7 @@ runner.run = function (campaign) {
         console.log(urls);
         console.log('there are ' + urls.length + ' pages');
         // TODO: change this to parallel
-        async.each(urls, function (url, cb) {
+        async.map(urls, async.reflect(function (url, cb) {
             shouldVisitHost(utils.other.getHostName(url))
                 .then(function (shouldVisit) {
                     if (!shouldVisit) {
@@ -58,14 +58,8 @@ runner.run = function (campaign) {
                 cb(err)
             });
 
-        }, function (err) {
-            if (err) {
-                logger.error(JSON.stringify(err));
-                console.log('not all pages finished');
-            } else {
-                console.log('check2');
-                logger.info("all pages finshed");
-            }
+        }), function (err,results) {
+            console.log(results);
             utils.other.createReport(reportData,curTime,campaign.title);
         });
     }).catch(function (err) {
