@@ -20,19 +20,9 @@ app.get('/', function (req, res) {
 
 app.post('/start', function (req, res) {
     winston.info("/start called");
-    // const campaign = req.body.campaign;
-    // const limit = req.body.limit;
-
-    const campaign = {
-        keywords:['digital marketing'],
-        title:'check',
-        firstName:'eden',
-        email:'test@test.com',
-        message:"hello it's me",
-        limit:5,
-        name:'check'
-    };
-    runner.run(campaign);
+    const campaign = req.body.campaign;
+    const limit = req.body.limit;
+    runner.run(campaign,limit);
     res.sendStatus(200);
 });
 

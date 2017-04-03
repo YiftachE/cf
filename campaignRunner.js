@@ -9,7 +9,7 @@ const winston = require('winston');
 
 const runner = {};
 
-runner.run = function (campaign) {
+runner.run = function (campaign,limit) {
     const curTime = Date.now();
     const logger = new (winston.Logger)({
         transports: [
@@ -24,7 +24,7 @@ runner.run = function (campaign) {
     finder.logger = logger;
     searcher.logger = logger;
     logger.info('Started running...');
-    searcher.search(campaign.keywords,campaign.limit).then(function (urls) {
+    searcher.search(campaign.keywords,limit).then(function (urls) {
         reportData.sitesVisitedNumber = urls.length;
         console.log(urls);
         console.log('there are ' + urls.length + ' pages');
