@@ -25,12 +25,11 @@ runner.run = function (campaign,limit) {
     finder.logger = logger;
     searcher.logger = logger;
     logger.info('Started running...');
-    searcher.search(campaign.keywords,limit).then(function (urls) {
+    searcher.search(['digital marketing'],10).then(function (urls) {
         reportData.sitesVisitedNumber = urls.length;
         console.log(urls);
-        console.log('there are ' + urls.length + ' pages');
         // TODO: change this to parallel
-        async.map(urls, async.reflect(function (url, cb) {
+        async.map(["https://digitalmarketinginstitute.com"], async.reflect(function (url, cb) {
             shouldVisitHost(utils.other.getHostName(url),campaign)
                 .then(function (shouldVisit) {
                     if (!shouldVisit) {
@@ -56,12 +55,11 @@ runner.run = function (campaign,limit) {
                         });
                     }
                 }).catch(function (err) {
-                    console.log(err)
                 cb(err)
             });
 
         }), function (err,results) {
-            console.log(results);
+            winston.info("Finished running");
             utils.other.createReport(reportData,curTime,campaign.title);
         });
     }).catch(function (err) {
@@ -77,10 +75,10 @@ const shouldVisitHost = function (hostname,campaign) {
                 database.createPrivateBlackList().then(function (model) {
                     database.checkIfSiteBlockedForCampaign(model, hostname, campaign.title).then(function (existsInCampaign) {
                         resolve (!existsInCampaign && !existsInGeneral)
-                    }).catch(err=>console.log());
-                }).catch(err=>console.log(err));
-            }).catch(err=>console.log(err));
-        }).catch(err=>console.log(err));
+                    }).catch(err=>reject(err));
+                }).catch(err=>reject(err));
+            }).catch(err=>reject(err));
+        }).catch(err=>reject(err));
     });
 };
 const addToBlacklist = function (url,campaign) {

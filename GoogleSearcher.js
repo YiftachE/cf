@@ -30,13 +30,14 @@ const searchKeyword = function (keyword,limit) {
         var chain = Promise.resolve([]);
         for (let i = 0; i < (limit / 9); i++) {
             chain = chain.then(function (allLinks) {
-                console.log(i);
                 return new Promise(function (resolve, reject) {
                     findLinks(browser).then(function (links) {
                         browser.findElement(By.css("td:last-of-type.navend > a.pn"))
                             .then(function (element) {
                                 element.click();
-                                resolve(allLinks.concat(links));
+                                setTimeout(()=> {
+                                    resolve(allLinks.concat(links));
+                                },3000);
                             }).catch(function (err) {
                             if (err.name && err.name === 'NoSuchElementError' && allLinks) {
                                 reject(new utils.exceptions.NoMoreResultsException(allLinks.concat(links)));
@@ -79,7 +80,8 @@ const findLinks = function (browser) {
         browser.getCurrentUrl()
             .then(function (url) {
                 if (url.includes("sorry")) {
-                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")),10000000)
+                    // Wait 24 hours to complete captcha
+                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")),86400000)
                         .then(function () {
                             browser.findElements(By.css("h3.r > a")).then(function (elems) {
                                 if (elems.length === 0) {
@@ -89,9 +91,11 @@ const findLinks = function (browser) {
                                     Promise.all(linksPromises).then(links=>resolve(links)).catch(err=>reject(err));
                                 }
                             }).catch(function (err) {
+                                console.log('hi1');
                                 reject(err);
                             });
                         }).catch(function (err) {
+                        console.log('hi2');
                         reject(err)
                     });
                 } else {
@@ -105,9 +109,11 @@ const findLinks = function (browser) {
                                     Promise.all(linksPromises).then(links=>resolve(links)).catch(err=>reject(err));
                                 }
                             }).catch(function (err) {
+                                console.log('hi3');
                                 reject(err);
                             });
                         }).catch(function (err) {
+                        console.log('hi4');
                         reject(err)
                     });
 

@@ -51,8 +51,7 @@ utils.other.getHostName = function (url) {
 };
 utils.other.promiseSerial = funcs =>
     funcs.reduce((promise, func) =>
-            promise.then(result => func().then(Array.prototype.concat.bind(result))),
-        Promise.resolve([]));
+        promise.then(result => func().then(Array.prototype.concat.bind(result))), Promise.resolve([]));
 utils.other.createReport = function (reportData, curTime, title) {
     fs.writeFile(`./logs/${title}-${curTime}-report.txt`,
         `Number of sites visited: ${reportData.sitesVisitedNumber}
@@ -61,7 +60,7 @@ utils.other.createReport = function (reportData, curTime, title) {
          Number of sites that got blocked by Blacklist: ${reportData.blockedByBLNumber}`
         , function (err) {
             if (err) {
-                winston.error(err);
+                winston.error(JSON.stringify(err));
             }
         }
     );

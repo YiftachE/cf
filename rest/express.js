@@ -38,11 +38,11 @@ app.post('/newProject', function (req, res) {
                 .then(function (searchWordsModel) {
                     console.log('search words models created!!');
                 }).catch(function (err) {
-                winston.error(err);
+                winston.error(JSON.stringify(err));
             });
             res.send('ok');
         }).catch(function (err) {
-            winston.error(err);
+            winston.error(JSON.stringify(err));
         });
     });
 });
