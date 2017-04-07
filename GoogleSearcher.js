@@ -35,12 +35,15 @@ const searchKeyword = function (keyword) {
         var chain = Promise.resolve([]);
         for (let i = 0; i < (options.limit / 9); i++) {
             chain = chain.then(function (allLinks) {
+              if(allLinks){
                 console.log(i);
                 return new Promise(function (resolve, reject) {
                     findLinks(browser).then(function (links) {
+                      console.log('links are found');
                         browser.findElement(By.css("td:last-of-type.navend > a.pn"))
                             .then(function (element) {
                                 element.click();
+                                console.log('resolving');
                                 resolve(allLinks.concat(links));
                             }).catch(function (err) {
                             if (err.name && err.name === 'NoSuchElementError' && allLinks) {
@@ -57,12 +60,15 @@ const searchKeyword = function (keyword) {
                         }
                     })
                 });
+              }
             }).catch(function (err) {
+              console.log('error linking ' + err);
                 // TODO:change string here
                 if (err.constructor.name === "NoMoreResultsException") {
                     resolve(err.results)
                 } else {
-                    reject(err);
+                    // reject(err);
+                    resolve(err.results)
                 }
             });
         }
