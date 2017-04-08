@@ -8,6 +8,7 @@ const utils = require('./utils.js');
 
 const searcher = {};
 searcher.search = function (keywords,limit) {
+  console.log('inside google searcher');
     const promises = [];
     for(let word of keywords) {
         promises.push(searchKeyword.bind(this,word,limit));
@@ -16,6 +17,7 @@ searcher.search = function (keywords,limit) {
 };
 
 const searchKeyword = function (keyword,limit) {
+  console.log('searching keyword ' + keyword);
     return new Promise(function (resolve, reject) {
         const chromeCapabilities = driver.Capabilities.chrome();
         const chromeOptions = {
@@ -30,6 +32,7 @@ const searchKeyword = function (keyword,limit) {
         var chain = Promise.resolve([]);
         for (let i = 0; i < (limit / 9); i++) {
             chain = chain.then(function (allLinks) {
+              if(allLinks){
                 console.log(i);
                 return new Promise(function (resolve, reject) {
                     findLinks(browser).then(function (links) {
@@ -52,11 +55,15 @@ const searchKeyword = function (keyword,limit) {
                         }
                     })
                 });
+              }
             }).catch(function (err) {
+              console.log('found an error');
+              console.log(err);
                 if (err.constructor.name === "NoMoreResultsException") {
                     resolve(err.results)
                 } else {
-                    reject(err);
+                    // reject(err);
+                    resolve(err);
                 }
             });
         }
