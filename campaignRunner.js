@@ -1,7 +1,7 @@
 /**
  * Created by Eden on 02/04/2017.
  */
-const searcher = require('./googleSearcher.js');
+const searcher = require('./GoogleSearcher.js');
 const finder = require('./contactUsFinder.js');
 const async = require('async');
 const utils = require('./utils.js');
@@ -10,12 +10,14 @@ const database = require('./db/databaseHandler');
 
 const runner = {};
 
-runner.run = function (campaign,limit) {
+runner.run = function (campaign, limit) {
     const curTime = Date.now();
-    const logger = new (winston.Logger)({
+    const logger = new(winston.Logger)({
         transports: [
-            new (winston.transports.Console)(),
-            new (winston.transports.File)({ filename: `./logs/${campaign.title}-${curTime}.log`})
+            new(winston.transports.Console)(),
+            new(winston.transports.File)({
+                filename: `./logs/${campaign.title}-${curTime}.log`
+            })
         ]
     });
     const reportData = {};
@@ -25,44 +27,43 @@ runner.run = function (campaign,limit) {
     finder.logger = logger;
     searcher.logger = logger;
     logger.info('Started running...');
-    searcher.search(campaign.keywords,limit).then(function (urls) {
+    searcher.search(campaign.keywords, limit).then(function (urls) {
         reportData.sitesVisitedNumber = urls.length;
-        console.log(urls);
-        console.log('there are ' + urls.length + ' pages');
         // TODO: change this to parallel
-        async.map(urls, async.reflect(function (url, cb) {
-            shouldVisitHost(utils.other.getHostName(url),campaign)
+        let connection = database.create();
+        async.mapLimit(urls,5, async.reflect(function (url, cb) {
+            shouldVisitHost(connection, utils.other.getHostName(url), campaign)
                 .then(function (shouldVisit) {
                     if (!shouldVisit) {
-                        reportData.blockedByBLNumber +=1;
+                        reportData.blockedByBLNumber += 1;
                         cb("Already visited host");
                     } else {
-                        finder.find(url,campaign)
+                        finder.find(url, campaign)
                             .then(function () {
-                                addToBlacklist(url,campaign);
-                                reportData.cfSentNumber +=1;
+                                addToBlacklist(url, campaign,connection);
+                                reportData.cfSentNumber += 1;
                                 logger.info('url:' + url + " sent!");
                                 cb();
                             }).catch(function (err) {
-                            // if (err & err.text === "Couldn't find form") {
-                            //
-                            // } else if (err & err.text === "Couldn't find contact us") {
-                            //
-                            // }
-                            reportData.noCfNumber +=1;
-                            const error = new Error('url:' + url + " " + JSON.stringify(err));
-                            logger.error(error);
-                            cb(error);
-                        });
+                                // if (err & err.text === "Couldn't find form") {
+                                //
+                                // } else if (err & err.text === "Couldn't find contact us") {
+                                //
+                                // }
+                                reportData.noCfNumber += 1;
+                                const error = new Error('url:' + url + " " + JSON.stringify(err));
+                                logger.error(error);
+                                cb(error);
+                            });
                     }
                 }).catch(function (err) {
                     console.log(err)
-                cb(err)
-            });
+                    cb(err)
+                });
 
-        }), function (err,results) {
+        }), function (err, results) {
             console.log(results);
-            utils.other.createReport(reportData,curTime,campaign.title);
+            utils.other.createReport(reportData, curTime, campaign.title);
         });
     }).catch(function (err) {
         logger.error(JSON.stringify(err));
@@ -70,27 +71,30 @@ runner.run = function (campaign,limit) {
 };
 
 
-const shouldVisitHost = function (hostname,campaign) {
+const shouldVisitHost = function (connection, hostname, campaign) {
     return new Promise(function (resolve, reject) {
-        database.createBlackListModel().then(function (model) {
+        database.createBlackListModel(connection).then(function (model) {
             database.checkExists(model, hostname).then(function (existsInGeneral) {
-                database.createPrivateBlackList().then(function (model) {
+                database.createPrivateBlackList(connection).then(function (model) {
                     database.checkIfSiteBlockedForCampaign(model, hostname, campaign.title).then(function (existsInCampaign) {
-                        resolve (!existsInCampaign && !existsInGeneral)
-                    }).catch(err=>console.log());
-                }).catch(err=>console.log(err));
-            }).catch(err=>console.log(err));
-        }).catch(err=>console.log(err));
+                        resolve(!existsInCampaign && !existsInGeneral)
+                    }).catch(err => console.log());
+                }).catch(err => console.log(err));
+            }).catch(err => console.log(err));
+        }).catch(err => console.log(err));
     });
 };
-const addToBlacklist = function (url,campaign) {
+const addToBlacklist = function (url, campaign,connection) {
     const hosname = utils.other.getHostName(url);
     return new Promise(function (resolve, reject) {
-        database.createPrivateBlackList().then(function (model) {
-            database.addToPrivateBlackList(model, {site: hosname, campaign: campaign.title}).then(function () {
+        database.createPrivateBlackList(connection).then(function (model) {
+            database.addToPrivateBlackList(model, {
+                site: hosname,
+                campaign: campaign.title
+            }).then(function () {
                 resolve();
-            }).catch(err=>reject(err));
-        }).catch(err=>reject(err));
+            }).catch(err => reject(err));
+        }).catch(err => reject(err));
     });
 };
 

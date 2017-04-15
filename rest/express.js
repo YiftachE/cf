@@ -10,7 +10,9 @@ const winston = require('winston');
 var app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 
 var handler = {};
 var db = new CampaignsDb();
@@ -22,7 +24,7 @@ app.post('/start', function (req, res) {
     winston.info("/start called");
     const campaign = req.body.campaign;
     const limit = req.body.limit;
-    runner.run(campaign,limit);
+    runner.run(campaign, limit);
     res.sendStatus(200);
 });
 
@@ -30,7 +32,8 @@ app.post('/newProject', function (req, res) {
     winston.info("/newProject called");
     database.createCampaignsModel().then(function (models) {
         console.log('model created, calling newCampaign');
-        var campaignModel = models.CampaignModel, searchWordsModel = models.SearchWordsModel;
+        var campaignModel = models.CampaignModel,
+            searchWordsModel = models.SearchWordsModel;
         database.addNewCampaign(campaignModel, req.body.data).then(function (campaign) {
             console.log('new campaign created');
             // calling search words creator
@@ -38,8 +41,8 @@ app.post('/newProject', function (req, res) {
                 .then(function (searchWordsModel) {
                     console.log('search words models created!!');
                 }).catch(function (err) {
-                winston.error(err);
-            });
+                    winston.error(err);
+                });
             res.send('ok');
         }).catch(function (err) {
             winston.error(err);
@@ -48,17 +51,22 @@ app.post('/newProject', function (req, res) {
 });
 
 app.post('/addToBlackList', function (req, res) {
-   database.createBlackListModel().then(function (model) {
+    let connection = database.create();
+    database.createBlackListModel(connection).then(function (model) {
         console.log('created black list model');
-        database.addToBlackList(model, {site: req.body.site}).then(function (newSite) {
+        database.addToBlackList(model, {
+            site: req.body.site
+        }).then(function (newSite) {
             console.log('added succefully to the black list');
             res.send(newSite);
         });
-   });
+    });
 });
 
 app.get('/checkExists', function (req, res) {
-    database.createBlackListModel().then(function (model) {
+    let connection = database.create();
+
+    database.createBlackListModel(connection).then(function (model) {
         console.log('created black list model');
         database.checkExists(model, req.query.site).then(function (exists) {
             console.log(exists);
@@ -68,7 +76,9 @@ app.get('/checkExists', function (req, res) {
 });
 
 app.get('/getAllBlackList', function (req, res) {
-    database.createBlackListModel().then(function (model) {
+    let connection = database.create();
+
+    database.createBlackListModel(connection).then(function (model) {
         console.log('created black list model');
         database.getAllBlackList(model).then(function (sites) {
             console.log(sites);
@@ -80,7 +90,10 @@ app.get('/getAllBlackList', function (req, res) {
 app.post('/addToPrivateBlackList', function (req, res) {
     database.createPrivateBlackList().then(function (model) {
         console.log('created private black list model');
-        database.addToPrivateBlackList(model, {site: req.body.site, campaign: req.body.campaign}).then(function () {
+        database.addToPrivateBlackList(model, {
+            site: req.body.site,
+            campaign: req.body.campaign
+        }).then(function () {
             console.log('added succefully to the private black list');
             res.send('ok');
         });
@@ -97,9 +110,9 @@ app.get('/checkIfSiteBlockedForCampaign', function (req, res) {
     });
 });
 
-handler.listen = function(){
-  app.listen(3001);
-  console.log('server is listening on port 3001');
+handler.listen = function () {
+    app.listen(3001);
+    console.log('server is listening on port 3001');
 }
 
 module.exports = handler;
