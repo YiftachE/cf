@@ -34,7 +34,7 @@ const searchKeyword = function (keyword, limit) {
             .withCapabilities(chromeCapabilities)
             .build();
         browser.get("http://www.google.com");
-        browser.findElement(By.name('q')).sendKeys(keyword, driver.Key.RETURN);
+        browser.findElement(By.name('q')).sendKeys(keyword, driver.Key.Enter);
         var chain = Promise.resolve([]);
         for (let i = 0; i < (limit / 9); i++) {
             chain = chain.then(function (allLinks) {
@@ -103,7 +103,7 @@ const findLinks = function (browser) {
                                 if (elems.length === 0) {
                                     reject("LastPage");
                                 } else {
-                                    const linksPromises = elems.map(elem => elem.getAttribute("href"));
+                                    const linksPromises = elems.map(elem => new {link:elem.getAttribute("href"),keyword:"word"});
                                     Promise.all(linksPromises).then(links => resolve(links)).catch(err => reject(err));
                                 }
                             }).catch(function (err) {

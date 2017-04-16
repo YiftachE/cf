@@ -32,17 +32,17 @@ runner.run = function (campaign, limit) {
         // TODO: change this to parallel
         let connection = database.create();
         async.mapLimit(urls,5, async.reflect(function (url, cb) {
-            shouldVisitHost(connection, utils.other.getHostName(url), campaign)
+            shouldVisitHost(connection, utils.other.getHostName(url.link), campaign)
                 .then(function (shouldVisit) {
                     if (!shouldVisit) {
                         reportData.blockedByBLNumber += 1;
                         cb("Already visited host");
                     } else {
-                        finder.find(url, campaign)
+                        finder.find(url.link, campaign)
                             .then(function () {
-                                addToBlacklist(url, campaign,connection);
+                                addToBlacklist(url.link, campaign,connection);
                                 reportData.cfSentNumber += 1;
-                                logger.info('url:' + url + " sent!");
+                                logger.info('url:' + url.link + " sent!");
                                 cb();
                             }).catch(function (err) {
                                 // if (err & err.text === "Couldn't find form") {
@@ -57,6 +57,7 @@ runner.run = function (campaign, limit) {
                             });
                     }
                 }).catch(function (err) {
+                    utils.other.createReport(reportData, curTime, campaign.title);
                     console.log(err)
                     cb(err)
                 });

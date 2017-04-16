@@ -85,6 +85,7 @@ utils.other.promiseSerialNonFunc = funcs =>
     funcs.reduce((promise, func) =>
         promise.then(result => func.then(Array.prototype.concat.bind(result))),
         Promise.resolve([]));
+        
 utils.other.createReport = function (reportData, curTime, title) {
     fs.writeFile(`./logs/${title}-${curTime}-report.txt`,
         `Number of sites visited: ${reportData.sitesVisitedNumber}
