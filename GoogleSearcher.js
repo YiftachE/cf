@@ -99,7 +99,7 @@ const findLinks = function (browser) {
         browser.getCurrentUrl()
             .then(function (url) {
                 if (url.includes("sorry")) {
-                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")), 10000000)
+                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")), 100000000)
                         .then(function () {
                             browser.findElements(By.css("h3.r > a")).then(function (elems) {
                                 if (elems.length === 0) {
@@ -118,7 +118,7 @@ const findLinks = function (browser) {
                             reject(err)
                         });
                 } else {
-                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")), 30000)
+                    browser.wait(until.elementLocated(By.css("td.navend > a.pn")), 30000000)
                         .then(function () {
                             browser.findElements(By.css("h3.r > a")).then(function (elems) {
                                 if (elems.length === 0) {
