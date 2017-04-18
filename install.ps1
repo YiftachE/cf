@@ -177,7 +177,7 @@ cd cf
 git checkout develop
 npm install
 mkdir logs 
-forever start index.js
+forever -o logs/out.log -e logs/err.log start index.js
 cd ../
 
 git clone https://github.com/YiftachE/cf_front

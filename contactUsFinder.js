@@ -10,10 +10,12 @@ let finder = {};
 
 finder.find = function (url, campaign) {
     return new Promise(function (resolve, reject) {
+        
         let browser = new Builder()
             .forBrowser('chrome')
             .build();
         browser.get(url);
+        
         browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"), 200)
             .then(function (elements) {
                 if (elements.length === 0) {

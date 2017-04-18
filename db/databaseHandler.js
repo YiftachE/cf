@@ -171,4 +171,5 @@ handler.checkIfSiteBlockedForCampaign = function (PrivateBlackListModel, site, c
             });
     });
 }
+
 module.exports = handler;

@@ -62,30 +62,67 @@ utils.other.getHostName = function (url) {
     const hostname = URL.parse(url).hostname;
     return hostname.indexOf('www.') && hostname || hostname.replace('www.', '');
 };
-utils.promise.reflect = function reflect(promise) {
-    return promise().then(function (v) {
-        return {
-            v: v,
-            status: "resolved"
-        }
-    }).catch(function (e) {
-        return {
-            e: e,
-            status: "rejected"
-        }
-    });
+
+utils.promise.promisesAllLimit = function parallelLimit(promiseFactories, limit) {
+    let result = [];
+    let cnt = 0;
+
+    function chain(promiseFactories) {
+        if (!promiseFactories.length) return;
+        let i = cnt++; // preserve order in result
+        return promiseFactories.shift()().then((res) => {
+            result[i] = res; // save result
+            return chain(promiseFactories); // append next promise
+        });
+    }
+
+    let arrChains = [];
+    while (limit-- > 0 && promiseFactories.length > 0) {
+        // create `limit` chains which run in parallel
+        arrChains.push(chain(promiseFactories));
+    }
+
+    // return when all arrChains are finished
+    return Promise.all(arrChains).then(() => result);
 }
 
 
+utils.promise.reflect = function reflect(promise) {
+    if (typeof promise === "function") {
+        return promise().then(function (v) {
+            return {
+                v: v,
+                status: "resolved"
+            }
+        }).catch(function (e) {
+            return {
+                e: e,
+                status: "rejected"
+            }
+        });
+    } else
+        return promise.then(function (v) {
+            return {
+                v: v,
+                status: "resolved"
+            }
+        }).catch(function (e) {
+            return {
+                e: e,
+                status: "rejected"
+            }
+        });
+}
+
 utils.other.promiseSerial = funcs =>
     funcs.reduce((promise, func) =>
-        promise.then(result => func().then(Array.prototype.concat.bind(result))),
+        promise.then(result => utils.promise.reflect(func()).then(Array.prototype.concat.bind(result))),
         Promise.resolve([]));
 utils.other.promiseSerialNonFunc = funcs =>
     funcs.reduce((promise, func) =>
         promise.then(result => func.then(Array.prototype.concat.bind(result))),
         Promise.resolve([]));
-        
+
 utils.other.createReport = function (reportData, curTime, title) {
     fs.writeFile(`./logs/${title}-${curTime}-report.txt`,
         `Number of sites visited: ${reportData.sitesVisitedNumber}
