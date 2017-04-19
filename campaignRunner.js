@@ -22,22 +22,19 @@ runner.run = function (campaign, limit) {
     searcher.logger = logger;
     logger.info('Started running...');
     searcher.search(campaign, limit).then(function (reports) {
-        let reps = [reports[0],reports[0]]
-        let init = {};
-        init.sitesVisitedNumber=0;
-        init.cfSentNumber=0;
-        init.blockedByBLNumber=0;
-        init.noCfNumber=0;
-        let aggReport=reps.reduce(function (aggReport, obj) {
-            let curReport=obj.v;
-            report.sitesVisitedNumber += curReport.sitesVisitedNumber;
-            report.cfSentNumber += curReport.cfSentNumber;
-            report.blockedByBLNumber += curReport.blockedByBLNumber;
-            report.noCfNumber += curReport.noCfNumber;
+        let init = new utils.ReportData();
+        let aggReport=reports.reduce(function (aggReport, curReport) {
+            aggReport.sitesVisitedNumber += curReport.sitesVisitedNumber;
+            aggReport.cfSentNumber += curReport.cfSentNumber;
+            aggReport.blockedByBLNumber += curReport.blockedByBLNumber;
+            aggReport.noCfNumber += curReport.noCfNumber;
+            aggReport.keyword += `,${curReport.keyword}`
+            return aggReport;
         },init);
         utils.other.createReport(aggReport, curTime, campaign.title);
 
     }).catch(function (err) {
+        
         logger.error(JSON.stringify(err));
     });
 };

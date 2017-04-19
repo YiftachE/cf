@@ -20,6 +20,18 @@ utils.selenium.retryOnStale = function (browser, selector, callback) {
             throw err;
         });
 }
+utils.ReportData = function (keyword) {
+    this.cfSentNumber = 0;
+    this.noCfNumber = 0;
+    this.blockedByBLNumber = 0;
+    this.sitesVisitedNumber = 0;
+    if (keyword) {
+        this.keyword = keyword;
+    } else {
+        this.keyword = "";
+    }
+};
+
 utils.selenium.takeScreenshot = function (browser, name) {
     return new Promise(function (resolve, reject) {
         browser.takeScreenshot().then(function (data) {
@@ -124,11 +136,16 @@ utils.other.promiseSerialNonFunc = funcs =>
         Promise.resolve([]));
 
 utils.other.createReport = function (reportData, curTime, title) {
-    fs.writeFile(`./logs/${title}-${curTime}-report.txt`,
+    mkdirp("./reports", function (err) {
+        if (err)
+            winston.error(err);
+    });
+    fs.writeFile(`./reports/${title}-${curTime}-report.txt`,
         `Number of sites visited: ${reportData.sitesVisitedNumber}
          Number of CF sent: ${reportData.cfSentNumber}
          Number of sites with no CF: ${reportData.noCfNumber}
-         Number of sites that got blocked by Blacklist: ${reportData.blockedByBLNumber}`,
+         Number of sites that got blocked by Blacklist: ${reportData.blockedByBLNumber}
+         Keywords done: ${reportData.keyword}`,
         function (err) {
             if (err) {
                 winston.error(err);

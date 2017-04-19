@@ -15,18 +15,23 @@ const visitor = require('./siteVisitor.js')
 const searcher = {};
 var self = this;
 self.closedState = false;
+
 searcher.search = function (campaign, limit) {
     console.log('inside google searcher');
     const promises = [];
-    const reportData = {};
-    reportData.cfSentNumber = 0;
-    reportData.noCfNumber = 0;
-    reportData.blockedByBLNumber = 0;
-
     for (let word of campaign.keywords) {
-        promises.push(searchKeyword.bind(this, word, limit, campaign, reportData));
+        promises.push(searchKeyword.bind(this, word, limit, campaign, new utils.ReportData(word)));
     }
-    return utils.other.promiseSerial(promises);
+    return utils.other.promiseSerial(promises).then(p =>
+        p.map(function (entity) {
+            let res = undefined;
+            if (p.status === "rejected") {
+                res = entity.e.results;
+            } else {
+                res = entity.v;
+            }
+            return res;
+        }));
 };
 
 const searchKeyword = function (keyword, limit, campaign, report) {
@@ -80,6 +85,7 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                                     reject(new utils.exceptions.NoMoreResultsException(report));
                                 } else {
                                     console.log(err.stack)
+                                    err.results = report
                                     reject(err);
                                 }
                             });
@@ -87,6 +93,7 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                         if (err === "LastPage") {
                             reject(new utils.exceptions.NoMoreResultsException(report));
                         } else {
+                            err.results = report;
                             reject(err);
                         }
                     })
@@ -97,8 +104,7 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                 if (err.constructor.name === "NoMoreResultsException") {
                     resolve(err.results)
                 } else {
-                    // reject(err);
-                    resolve(err);
+                    reject(err);
                 }
             });
         }
