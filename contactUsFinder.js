@@ -10,18 +10,10 @@ let finder = {};
 
 finder.find = function (url, campaign) {
     return new Promise(function (resolve, reject) {
-        
         let browser = new Builder()
             .forBrowser('chrome')
             .build();
-        let getDone = false;
-        let didQuit = false;
-        setTimeout(function () {
-            browser.close().then(function () {
-                didQuit = true;
-                throw new Exception("browser timeout")
-            }).catch(e => reject(e));
-        }, 30000);
+        browser.manage().timeouts().pageLoadTimeout(30000)
         browser.get(url).then(function () {;
             getDone = true;
             browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"))
@@ -49,18 +41,10 @@ finder.find = function (url, campaign) {
                                 const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
                                 utils.selenium.takeScreenshot(browser, pictureName)
                                     .then(function () {
-                                        if (!didQuit) {
-                                            browser.quit();
-                                            didQuit = true;
-                                        }
                                         console.log('url:' + url + " success!");
                                         resolve()
                                     }).catch(function (err) {
                                         finder.logger.error(err);
-                                        if (!didQuit) {
-                                            browser.quit();
-                                            didQuit = true;
-                                        }
                                         console.log('url:' + url + " success!");
                                         resolve()
                                     });
@@ -69,28 +53,19 @@ finder.find = function (url, campaign) {
                             if (err.text === "site was not sucessfull") {
                                 console.log("debug now");
                             }
-                            if (!didQuit) {
-                                browser.quit();
-                                didQuit = true;
-                            }
                             reject(new utils.exceptions.NoContactException(err));
                         });
                     }
                 })
                 .catch(function (err) {
-                    if (!didQuit) {
-                        browser.quit();
-                    }
-                    didQuit = true;
                     reject(err);
                 });
         }).catch(function (e) {
-            console.log(e);
-            if (!didQuit) {
-                browser.quit();
-            };
-        });
+            browser.quit();
+            reject(e);
+        });;
     });
+
 }
 
 const searchForm = function (browser, campaign) {

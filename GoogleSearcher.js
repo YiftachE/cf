@@ -46,6 +46,9 @@ const searchKeyword = function (keyword, limit, campaign, report) {
         let browser = new Builder()
             .withCapabilities(chromeCapabilities)
             .build();
+        browser.manage()
+            .timeouts()
+            .pageLoadTimeout(3000000);
         browser.get("http://www.google.com");
         var a = browser.findElement(By.name('q')).sendKeys(keyword).then(function () {
             browser.findElement(By.name('q')).sendKeys(driver.Key.ENTER);
@@ -65,7 +68,7 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                                 report.blockedByBLNumber += blockedByBLNumber.length;
                                 report.noCfNumber += results.length - success.length - blockedByBLNumber.length;
 
-                                var promise = ()=>browser.findElement(By.css("td:last-of-type.navend > a.pn"));
+                                var promise = () => browser.findElement(By.css("td:last-of-type.navend > a.pn"));
                                 utils.promise.tryAtMost(undefined, 20, promise).then(function (element) {
                                     element.click();
                                     resolve(report);
