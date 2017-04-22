@@ -14,6 +14,22 @@ finder.find = function (url, campaign) {
             .forBrowser('chrome')
             .build();
         browser.manage().timeouts().pageLoadTimeout(30000)
+        let self = this;
+        this.didntQuit = true;
+        browser.safeQuit = function () {
+            browser.getTitle().then(function () {
+                if (self.didntQuit) {
+                    browser.quit().catch(e=>reject(e));
+                    self.didQuit = false;
+                }
+            }).catch(function (e) {
+                if (self.didntQuit) {
+                    browser.quit().catch(e=>reject(e));
+                    self.didQuit = false;
+                }
+                reject(e);
+            });
+        }
         browser.get(url).then(function () {;
             getDone = true;
             browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"))
@@ -22,10 +38,10 @@ finder.find = function (url, campaign) {
                         const pictureName = `./sc/${campaign.name}/NoContact-${utils.other.getHostName(url)}`;
                         utils.selenium.takeScreenshot(browser, pictureName)
                             .then(function () {
-                                browser.quit();
+                                browser.safeQuit();
                                 reject(new utils.exceptions.NoFormException());
                             }).catch(function (err) {
-                                browser.quit();
+                                browser.safeQuit();
                                 reject(new utils.exceptions.NoFormException(err));
                             });
                     } else {
@@ -42,12 +58,12 @@ finder.find = function (url, campaign) {
                                 utils.selenium.takeScreenshot(browser, pictureName)
                                     .then(function () {
                                         console.log('url:' + url + " success!");
-                                        browser.quit();
+                                        browser.safeQuit();
                                         resolve()
                                     }).catch(function (err) {
                                         finder.logger.error(err);
                                         console.log('url:' + url + " success!");
-                                        browser.quit();
+                                        browser.safeQuit();
                                         resolve()
                                     });
                             }
@@ -63,7 +79,7 @@ finder.find = function (url, campaign) {
                     reject(err);
                 });
         }).catch(function (e) {
-            browser.quit();
+            browser.safeQuit();
             reject(e);
         });;
     });
@@ -91,17 +107,17 @@ const searchForm = function (browser, campaign) {
                                     });
                             }, 3000);
                         }).catch(function (err) {
-                            browser.quit();
+                            browser.safeQuit();
                             reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err));
                         });
                     }).catch(function (err) {
-                        browser.quit();
+                        browser.safeQuit();
                         reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs", err));
                     })
                 });
             }
         }).catch(function (err) {
-            browser.quit();
+            browser.safeQuit();
             reject(err)
         });
     });
@@ -159,12 +175,12 @@ const goToContact = function (index, element, browser, url, campaign) {
                 searchForm(browser, campaign).then(_ => resolve()).catch(err => {
                     const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
                     utils.selenium.takeScreenshot(browser, pictureName).then(_ => reject(err)).catch(function (e) {
-                        browser.quit();
+                        browser.safeQuit();
                         reject(e);
                     });
                 });
             }).catch(function (e) {
-                browser.quit();
+                browser.safeQuit();
                 reject(e);
             });
     });

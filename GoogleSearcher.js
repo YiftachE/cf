@@ -55,11 +55,12 @@ const searchKeyword = function (keyword, limit, campaign, report) {
         });
         let connection = database.create();
         var chain = Promise.resolve(report);
-        for (let i = 0; i < (limit / 12); i++) {
+        for (let i = 0; i < (limit / 10); i++) {
             chain = chain.then(report => {
                 return new Promise(function (resolve, reject) {
                     findLinks(browser).then(function (links) {
-                        utils.other.promiseSerial(links.map(link => () => visitor.visitSite(connection, link, campaign)))
+                        utils.other.promiseSerial(
+                                links.map(link => () => visitor.visitSite(connection, link, campaign)))
                             .then(function (results) {
                                 var success = results.filter(x => x.status === "resolved");
                                 var blockedByBLNumber = results.filter(x => x.status === "rejected").filter(x => x.e === "already visited");
@@ -73,7 +74,7 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                                     element.click();
                                     resolve(report);
                                 }).catch(function (err) {
-                                    console.log(err);
+                                    reject(err);
                                 });
                             }).catch(function (err) {
                                 if (err.name && err.name === 'NoSuchElementError' && report) {
