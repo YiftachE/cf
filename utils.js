@@ -31,7 +31,22 @@ utils.ReportData = function (keyword) {
         this.keyword = "";
     }
 };
+utils.promise.tryAtMost = function (otherArgs, maxRetries, promise) {
+    return new Promise(function (resolve, reject) {
+        promise().then(res => resolve(res)).catch(function (e) {
+            if (maxRetries > 0) {
+                // Try again if we haven't reached maxRetries yet
+                setTimeout(function () {
+                    resolve(utils.promise.tryAtMost(otherArgs, maxRetries - 1, promise));
+                }, 200);
+            } else {
+                reject(e);
+            }
+        })
+    });
 
+
+}
 utils.selenium.takeScreenshot = function (browser, name) {
     return new Promise(function (resolve, reject) {
         browser.takeScreenshot().then(function (data) {
@@ -46,6 +61,9 @@ utils.selenium.takeScreenshot = function (browser, name) {
                 }
             });
 
+        }).catch(function (err) {
+            winston.error(err);
+            reject(err);
         });
     });
 };

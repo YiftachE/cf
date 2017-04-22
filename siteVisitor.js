@@ -38,6 +38,7 @@ visitor.visitSite = (connection, url, campaign) => new Promise(function (resolve
                 //reportData.blockedByBLNumber += 1;
                 reject("already visited")
             } else {
+                finder.logger = visitor.logger;
                 finder.find(url, campaign)
                     .then(function () {
                         addToBlacklist(url, campaign, connection);

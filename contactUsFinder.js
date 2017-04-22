@@ -14,55 +14,89 @@ finder.find = function (url, campaign) {
         let browser = new Builder()
             .forBrowser('chrome')
             .build();
-        browser.get(url);
-        
-        browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"), 200)
-            .then(function (elements) {
-                if (elements.length === 0) {
-                    const pictureName = `./sc/${campaign.name}/NoContact-${utils.other.getHostName(url)}`;
-                    utils.selenium.takeScreenshot(browser, pictureName)
-                        .then(function () {
-                            browser.quit();
-                            reject(new utils.exceptions.NoFormException());
-                        }).catch(function (err) {
-                            browser.quit();
-                            reject(new utils.exceptions.NoFormException(err));
-                        });
-                } else {
-                    let promises = [];
-                    for (let i = 0; i < elements.length; i++) {
-                        promises.push(goToContact.bind(this, elements[i], browser, url, campaign));
-                    }
-                    Promise.all(promises.map(utils.promise.reflect)).then(function (results) {
-                        var success = results.filter(x => x.status === "resolved");
-                        const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
+        let getDone = false;
+        let didQuit = false;
+        setTimeout(function () {
+            browser.close().then(function () {
+                didQuit = true;
+                throw new Exception("browser timeout")
+            }).catch(e => reject(e));
+        }, 30000);
+        browser.get(url).then(function () {;
+            getDone = true;
+            browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"))
+                .then(function (elements) {
+                    if (elements.length === 0) {
+                        const pictureName = `./sc/${campaign.name}/NoContact-${utils.other.getHostName(url)}`;
                         utils.selenium.takeScreenshot(browser, pictureName)
                             .then(function () {
                                 browser.quit();
-                                console.log('url:' + url + " success!");
-                                resolve()
+                                reject(new utils.exceptions.NoFormException());
                             }).catch(function (err) {
-                                finder.logger.error(err);
                                 browser.quit();
-                                console.log('url:' + url + " success!");
-                                resolve()
+                                reject(new utils.exceptions.NoFormException(err));
                             });
-                    }).catch(function (err) {
+                    } else {
+                        let promises = [];
+                        for (let i = 0; i < elements.length; i++) {
+                            promises.push(goToContact.bind(this, i, elements[i], browser, url, campaign));
+                        }
+                        Promise.all(promises.map(utils.promise.reflect)).then(function (results) {
+                            var success = results.filter(x => x.status === "resolved");
+                            if (success.length === 0) {
+                                reject(new Exception("site was not successful"))
+                            } else {
+                                const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
+                                utils.selenium.takeScreenshot(browser, pictureName)
+                                    .then(function () {
+                                        if (!didQuit) {
+                                            browser.quit();
+                                            didQuit = true;
+                                        }
+                                        console.log('url:' + url + " success!");
+                                        resolve()
+                                    }).catch(function (err) {
+                                        finder.logger.error(err);
+                                        if (!didQuit) {
+                                            browser.quit();
+                                            didQuit = true;
+                                        }
+                                        console.log('url:' + url + " success!");
+                                        resolve()
+                                    });
+                            }
+                        }).catch(function (err) {
+                            if (err.text === "site was not sucessfull") {
+                                console.log("debug now");
+                            }
+                            if (!didQuit) {
+                                browser.quit();
+                                didQuit = true;
+                            }
+                            reject(new utils.exceptions.NoContactException(err));
+                        });
+                    }
+                })
+                .catch(function (err) {
+                    if (!didQuit) {
                         browser.quit();
-                        reject(new utils.exceptions.NoContactException(err));
-                    });
-                }
-            })
-            .catch(function (err) {
+                    }
+                    didQuit = true;
+                    reject(err);
+                });
+        }).catch(function (e) {
+            console.log(e);
+            if (!didQuit) {
                 browser.quit();
-                reject(err);
-            });
+            };
+        });
     });
 }
 
 const searchForm = function (browser, campaign) {
     return new Promise(function (resolve, reject) {
         browser.findElements(By.css("form")).then(function (elements) {
+            console.log("got to search form")
             if (elements.length === 0) {
                 reject(new utils.exceptions.NoFormException());
             } else {
@@ -97,6 +131,7 @@ const fillForm = function (inputs, campaign) {
     for (let input of inputs) {
         promises.push(function () {
             return new Promise(function (resolve, reject) {
+                console.log("got to fill form")
                 input.getTagName().then(function (tagName) {
                     if (tagName === "textarea") {
                         input.sendKeys(campaign.message);
@@ -131,16 +166,19 @@ const fillForm = function (inputs, campaign) {
     }
     return utils.other.promiseSerial(promises);
 };
-const goToContact = function (element, browser, url, campaign) {
+const goToContact = function (index, element, browser, url, campaign) {
     return new Promise(function (resolve, reject) {
-        element.click().then(function () {;
-            searchForm(browser, campaign).then(_ => resolve()).catch(err => {
-                const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
-                utils.selenium.takeScreenshot(browser, pictureName).then(_ => reject(err)).catch(_ => reject(err));
-            });
-        }).catch(e =>
-            reject(e)
-        );
+        var click = () => browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"), 200)
+            .then(elements => elements[index].click())
+        utils.promise.tryAtMost(undefined, 10, click)
+            .then(function () {;
+                searchForm(browser, campaign).then(_ => resolve()).catch(err => {
+                    const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
+                    utils.selenium.takeScreenshot(browser, pictureName).then(_ => reject(err)).catch(_ => reject(err));
+                });
+            }).catch(e =>
+                reject(e)
+            );
     });
 };
 

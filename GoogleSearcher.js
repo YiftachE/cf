@@ -56,9 +56,6 @@ const searchKeyword = function (keyword, limit, campaign, report) {
             chain = chain.then(report => {
                 return new Promise(function (resolve, reject) {
                     findLinks(browser).then(function (links) {
-                        var retryCount = {
-                            "count": 20
-                        };
                         utils.other.promiseSerial(links.map(link => () => visitor.visitSite(connection, link, campaign)))
                             .then(function (results) {
                                 var success = results.filter(x => x.status === "resolved");
@@ -68,17 +65,12 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                                 report.blockedByBLNumber += blockedByBLNumber.length;
                                 report.noCfNumber += results.length - success.length - blockedByBLNumber.length;
 
-                                var retry = () => browser.findElement(By.css("td:last-of-type.navend > a.pn"));
-                                retry().then(function (element) {
+                                var promise = ()=>browser.findElement(By.css("td:last-of-type.navend > a.pn"));
+                                utils.promise.tryAtMost(undefined, 20, promise).then(function (element) {
                                     element.click();
                                     resolve(report);
                                 }).catch(function (err) {
-                                    if (retryCount.count > 0) {
-                                        retryCount.count--;
-                                        retry();
-                                    } else {
-                                        console.log(err);
-                                    }
+                                    console.log(err);
                                 });
                             }).catch(function (err) {
                                 if (err.name && err.name === 'NoSuchElementError' && report) {
