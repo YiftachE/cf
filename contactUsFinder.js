@@ -42,10 +42,12 @@ finder.find = function (url, campaign) {
                                 utils.selenium.takeScreenshot(browser, pictureName)
                                     .then(function () {
                                         console.log('url:' + url + " success!");
+                                        browser.quit();
                                         resolve()
                                     }).catch(function (err) {
                                         finder.logger.error(err);
                                         console.log('url:' + url + " success!");
+                                        browser.quit();
                                         resolve()
                                     });
                             }
@@ -77,25 +79,29 @@ const searchForm = function (browser, campaign) {
             } else {
                 // Check what happens when theres multiple forms
                 browser.findElements(By.css("form input,form textarea")).then(function (inputs) {
-                    fillForm(inputs, campaign);
-                    inputs[0].submit().then(function () {
-                        // TODO : try to avoid this setTimeout
-                        setTimeout(function () {
-                            browser.navigate().back()
-                                .then(function () {
-                                    resolve();
-                                }).catch(function (err) {
-                                    reject(err);
-                                });
-                        }, 3000);
+                    fillForm(inputs, campaign).then(function () {
+                        inputs[0].submit().then(function () {
+                            // TODO : try to avoid this setTimeout
+                            setTimeout(function () {
+                                browser.navigate().back()
+                                    .then(function () {
+                                        resolve();
+                                    }).catch(function (err) {
+                                        reject(err);
+                                    });
+                            }, 3000);
+                        }).catch(function (err) {
+                            browser.quit();
+                            reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err));
+                        });
                     }).catch(function (err) {
-                        reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err));
-                    });
-                }).catch(function (err) {
-                    reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs", err));
-                })
+                        browser.quit();
+                        reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs", err));
+                    })
+                });
             }
         }).catch(function (err) {
+            browser.quit();
             reject(err)
         });
     });
@@ -110,6 +116,7 @@ const fillForm = function (inputs, campaign) {
                 input.getTagName().then(function (tagName) {
                     if (tagName === "textarea") {
                         input.sendKeys(campaign.message);
+                        resolve();
                     } else {
                         input.getAttribute("type").then(function (type) {
                             if (type === "text") {
@@ -128,7 +135,9 @@ const fillForm = function (inputs, campaign) {
                                 });
                             } else if (type === "checkbox") {
                                 input.click();
-                            }
+                                resolve();
+                            } else
+                                resolve();
                         }).catch(function (err) {
                             reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
                         });
@@ -149,11 +158,15 @@ const goToContact = function (index, element, browser, url, campaign) {
             .then(function () {;
                 searchForm(browser, campaign).then(_ => resolve()).catch(err => {
                     const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
-                    utils.selenium.takeScreenshot(browser, pictureName).then(_ => reject(err)).catch(_ => reject(err));
+                    utils.selenium.takeScreenshot(browser, pictureName).then(_ => reject(err)).catch(function (e) {
+                        browser.quit();
+                        reject(e);
+                    });
                 });
-            }).catch(e =>
-                reject(e)
-            );
+            }).catch(function (e) {
+                browser.quit();
+                reject(e);
+            });
     });
 };
 

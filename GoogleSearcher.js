@@ -48,7 +48,7 @@ const searchKeyword = function (keyword, limit, campaign, report) {
             .build();
         browser.manage()
             .timeouts()
-            .pageLoadTimeout(3000000);
+            .pageLoadTimeout(300000000);
         browser.get("http://www.google.com");
         var a = browser.findElement(By.name('q')).sendKeys(keyword).then(function () {
             browser.findElement(By.name('q')).sendKeys(driver.Key.ENTER);
