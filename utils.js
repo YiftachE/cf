@@ -49,22 +49,25 @@ utils.promise.tryAtMost = function (otherArgs, maxRetries, promise) {
 }
 utils.selenium.takeScreenshot = function (browser, name) {
     return new Promise(function (resolve, reject) {
-        browser.takeScreenshot().then(function (data) {
-            const base64Data = data.replace(/^data:image\/png;base64,/, "");
-            mkdirp(getDirName(name), function (err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    fs.writeFile(`${name}.png`, base64Data, 'base64', function (err) {
-                        err ? reject(err) : resolve();
-                    });
-                }
-            });
+        browser.getTitle().then(() =>
+            browser.takeScreenshot().then(function (data) {
+                const base64Data = data.replace(/^data:image\/png;base64,/, "");
+                mkdirp(getDirName(name), function (err) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        fs.writeFile(`${name}.png`, base64Data, 'base64', function (err) {
+                            err ? reject(err) : resolve();
+                        });
+                    }
+                });
 
-        }).catch(function (err) {
-            winston.error(err);
-            reject(err);
-        });
+            }).catch(function (err) {
+                winston.error(err);
+                reject(err);
+            })).catch(e =>
+            reject(e)
+        );
     });
 };
 utils.selenium.logUrl = function LogUrl(browser) {
