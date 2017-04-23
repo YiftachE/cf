@@ -69,12 +69,22 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                                 report.blockedByBLNumber += blockedByBLNumber.length;
                                 report.noCfNumber += results.length - success.length - blockedByBLNumber.length;
 
-                                var promise = () => browser.findElement(By.css("td:last-of-type.navend > a.pn"));
-                                utils.promise.tryAtMost(undefined, 20, promise).then(function (element) {
+                                var promise = function () {
+                                    return browser.getCurrentUrl()
+                                        .then(function (url) {
+                                            return browser.get(url)
+                                                .then(() =>
+                                                    browser.wait(until.elementLocated(By.css("td:last-of-type.navend > a.pn")),4000)
+                                                    .then(() =>
+                                                        browser.findElement(By.css("td:last-of-type.navend > a.pn"))
+                                                    ))
+                                        })
+                                };
+                                return promise().then(function (element) {
                                     element.click();
                                     resolve(report);
                                 }).catch(function (err) {
-                                    reject(err);
+                                    reject(new utils.exceptions.NoMoreResultsException(report));
                                 });
                             }).catch(function (err) {
                                 if (err.name && err.name === 'NoSuchElementError' && report) {
@@ -98,9 +108,9 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                 console.log('found an error');
                 console.log(err);
                 if (err.constructor.name === "NoMoreResultsException") {
-                    resolve(err.results)
+                    return err.results;
                 } else {
-                    reject(err);
+                    reject(report);
                 }
             });
         }
