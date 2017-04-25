@@ -57,7 +57,7 @@ utils.selenium.takeScreenshot = function (browser, name) {
                         reject(err);
                     } else {
                         fs.writeFile(`${name}.png`, base64Data, 'base64', function (err) {
-                            err ? reject(err) : resolve();
+                            err ? reject(err) : resolve(`${name}.png`);
                         });
                     }
                 });
