@@ -6,14 +6,17 @@ var dbc = new DeathByCaptcha("Jsinger@zdhconsulting.com", "67araydeathbycaptcha"
 
 var solver = {}
 
-solver.solve = function(imageData,cb) {
-  dbc.solve(imageData,function(err,id,solution){
-    if(err) {
-      console.log(err)
-    } else {
-      cb(solution);
-    }
+solver.solve = function (imageData) {
+  return new Promise(function (resolve, reject) {
+    dbc.solve(imageData, function (err, id, solution) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(solution)
+      }
+    });
   })
+
 }
 
 module.exports = solver

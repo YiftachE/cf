@@ -172,11 +172,15 @@ write-host "`n----------------------------"
 write-host " Installing projects "
 write-host "----------------------------`n" 
 
-git clone https://github.com/YiftachE/cf.git
+if(!(Test-Path cf)){
+    git clone https://github.com/YiftachE/cf.git
+}
 cd cf
 git checkout develop
+git pull
 npm install
 mkdir logs 
+forever stopall
 forever -o logs/out.log -e logs/err.log start index.js
 cd ../
 

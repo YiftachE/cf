@@ -136,98 +136,97 @@ const searchForm = function (browser, campaign) {
 
 };
 const fillForm = function (browser, inputs, campaign) {
-    let promises = [];
-    for (let input of inputs) {
-        promises.push(function () {
-            return new Promise(function (resolve, reject) {
-                console.log("got to fill form")
-                input.getTagName().then(function (tagName) {
-                    if (tagName === "textarea") {
-                        input.sendKeys(campaign.message);
-                        resolve();
-                    } else {
-                        input.getAttribute("type").then(function (type) {
-                            if (type === "text") {
-                                input.getAttribute("name").then(function (name) {
-                                    const lcName = name.toLowerCase();
-                                    if (lcName.includes("name")) {
-                                        input.sendKeys(campaign.firstName);
-                                    } else if (lcName.includes("email")) {
-                                        input.sendKeys(campaign.email)
-                                    }
-                                    if (!lcName.includes("captcha")) {
+        let promises = [];
+        for (let input of inputs) {
+            promises.push(function () {
+                    return new Promise(function (resolve, reject) {
+                            console.log("got to fill form")
+                            input.getTagName().then(function (tagName) {
+                                    if (tagName === "textarea") {
+                                        input.sendKeys(campaign.message);
                                         resolve();
                                     } else {
-                                        browser.findElement(By.xpath("//img[contains(@id ,captcha) or contains(@id ,Captcha)]"))
-                                            .then(function (element) {
-                                                element.getAttribute("src").then(function (url) {
-                                                    request.get({
-                                                        url: url,
-                                                        encoding: null
-                                                    }, (err, res, body) => {
-                                                        if (!err) {
-                                                            captchaSolver.solve(body, function (solution) {
-                                                                input.sendKeys(solution);
+                                        input.getAttribute("type").then(function (type) {
+                                                if (type === "text") {
+                                                    input.getAttribute("name").then(function (name) {
+                                                            const lcName = name.toLowerCase();
+                                                            if (lcName.includes("name")) {
+                                                                input.sendKeys(campaign.firstName);
+                                                            } else if (lcName.includes("email")) {
+                                                                input.sendKeys(campaign.email)
+                                                            }
+                                                            if (!lcName.includes("captcha")) {
                                                                 resolve();
-                                                            })
-                                                            
-                                                        }
-                                                    });
-
-                                                });
-
-
-                                            }).catch(e =>
-                                                console.log(e));
-                                    }
-                                }).catch(function (err) {
+                                                            } else {
+                                                                browser.findElement(By.xpath("//img[contains(@id ,captcha) or contains(@id ,Captcha)]"))
+                                                                    .then(function (element) {
+                                                                        element.getAttribute("src").then(function (url) {
+                                                                            request.get({
+                                                                                url: url,
+                                                                                encoding: null
+                                                                            }, (err, res, body) => {
+                                                                                if (!err) {
+                                                                                    captchaSolver.solve(body).then(function (solution) {
+                                                                                        input.sendKeys(solution);
+                                                                                        resolve();
+                                                                                    }).catch(e => reject(utils.exceptions.SubmitExcpetion("could not solve captcha")));
+                                                                                } else {
+                                                                                    reject(utils.exceptions.SubmitExcpetion("could not solve captcha"));
+                                                                                }
+                                                                            });
+                                                                        }).catch(e => reject(new utils.exceptions.SubmitExcpetion("could not solve captcha")));
+                                                                    }).catch(e =>
+                                                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err))
+                                                                    }
+                                                            }).catch(function (err) {
+                                                            reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
+                                                        });
+                                                    }
+                                                    else if (type === "checkbox") {
+                                                        input.click();
+                                                        resolve();
+                                                    } else
+                                                        resolve();
+                                                }).catch(function (err) {
+                                                reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
+                                            });
+                                        }
+                                    }).catch(function (err) {
                                     reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
-                                });
-                            } else if (type === "checkbox") {
-                                input.click();
-                                resolve();
-                            } else
-                                resolve();
-                        }).catch(function (err) {
-                            reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
-                        });
-                    }
-                }).catch(function (err) {
-                    reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
-                })
-            })
-        });
-    }
-    return utils.other.promiseSerial(promises);
-};
-const goToContact = function (index, element, browser, url, campaign) {
-    return new Promise(function (resolve, reject) {
-        var click = () => browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"), 200)
-            .then(elements => elements[index].click())
-        utils.promise.tryAtMost(undefined, 10, click)
-            .then(function () {;
-                return searchForm(browser, campaign)
-                    .then(_ => resolve())
-                    .catch(err => {
-                        const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
-                        utils.selenium.takeScreenshot(browser, pictureName)
-                            .then(_ =>
-                                reject(err))
-                            .catch(function (e) {
-                                browser.safeQuit().then(function () {;
-                                    reject(e);
-                                }).catch(e =>
-                                    reject(e));
-                            });
-                    }).catch(e =>
-                        reject(e));
-            }).catch(function (e) {
-                browser.safeQuit().then(() =>
-                    reject(e));
-            });
-    }).catch(e =>
-        reject(e)
-    );
-};
+                                })
+                            })
+                    });
+            }
+            return utils.other.promiseSerial(promises);
+        };
+        const goToContact = function (index, element, browser, url, campaign) {
+            return new Promise(function (resolve, reject) {
+                var click = () => browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"), 200)
+                    .then(elements => elements[index].click())
+                utils.promise.tryAtMost(undefined, 10, click)
+                    .then(function () {;
+                        return searchForm(browser, campaign)
+                            .then(_ => resolve())
+                            .catch(err => {
+                                const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
+                                utils.selenium.takeScreenshot(browser, pictureName)
+                                    .then(_ =>
+                                        reject(err))
+                                    .catch(function (e) {
+                                        browser.safeQuit().then(function () {;
+                                            reject(e);
+                                        }).catch(e =>
+                                            reject(e));
+                                    });
+                            }).catch(e =>
+                                reject(e));
+                    }).catch(function (e) {
+                        browser.safeQuit().then(() =>
+                            reject(e));
+                    });
+            }).catch(e =>
+                reject(e)
+            );
+        };
 
-module.exports = finder;
+        module.exports = finder;
