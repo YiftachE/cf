@@ -36,66 +36,66 @@ finder.find = function (url, campaign) {
             return utils.promise.tryAtMost(undefined, 10, delegate).catch(e => reject(e))
 
         };
-        browser.get("http://ifsc.ie/page.aspx?idpage=7").then(form =>
-            searchForm(browser, campaign).then(f => console.log("nice")).catch(e => console.log(e))
-        ).catch(e => console.log(e));
-        // browser.get(url).then(function () {;
-        //     getDone = true;
-        //     browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"))
-        //         .then(function (elements) {
-        //             if (elements.length === 0) {
-        //                 const pictureName = `./sc/${campaign.name}/NoContact-${utils.other.getHostName(url)}`;
-        //                 utils.selenium.takeScreenshot(browser, pictureName)
-        //                     .then(function () {
-        //                         browser.safeQuit().then(function () {
-        //                             reject(new utils.exceptions.NoFormException());
-        //                         });
-        //                     }).catch(function (err) {
-        //                         browser.safeQuit().then(function () {
-        //                             reject(new utils.exceptions.NoFormException(err));
-        //                         });
-        //                     });
-        //             } else {
-        //                 let promises = [];
-        //                 for (let i = 0; i < elements.length; i++) {
-        //                     promises.push(goToContact.bind(this, i, elements[i], browser, url, campaign));
-        //                 }
-        //                 Promise.all(promises.map(utils.promise.reflect)).then(function (results) {
-        //                     var success = results.filter(x => x.status === "resolved");
-        //                     if (success.length === 0) {
-        //                         reject(new Exception("site was not successful"))
-        //                     } else {
-        //                         const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
-        //                         utils.selenium.takeScreenshot(browser, pictureName)
-        //                             .then(function () {
-        //                                 console.log('url:' + url + " success!");
-        //                                 browser.safeQuit();
-        //                                 resolve()
-        //                             }).catch(function (err) {
-        //                                 finder.logger.error(err);
-        //                                 console.log('url:' + url + " success!");
-        //                                 browser.safeQuit();
-        //                                 resolve()
-        //                             });
-        //                     }
-        //                 }).catch(function (err) {
-        //                     if (err.text === "site was not sucessfull") {
-        //                         console.log("debug now");
-        //                     }
-        //                     browser.safeQuit().then(function () {
-        //                         reject(new utils.exceptions.NoContactException(err));
-        //                     });
+        //browser.get("http://ifsc.ie/page.aspx?idpage=7").then(form =>
+        //    searchForm(browser, campaign).then(f => console.log("nice")).catch(e => console.log(e))
+        //).catch(e => console.log(e));
+         browser.get(url).then(function () {;
+             getDone = true;
+             browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"))
+                 .then(function (elements) {
+                     if (elements.length === 0) {
+                         const pictureName = `./sc/${campaign.name}/NoContact-${utils.other.getHostName(url)}`;
+                         utils.selenium.takeScreenshot(browser, pictureName)
+                             .then(function () {
+                                 browser.safeQuit().then(function () {
+                                     reject(new utils.exceptions.NoFormException());
+                                 });
+                             }).catch(function (err) {
+                                 browser.safeQuit().then(function () {
+                                     reject(new utils.exceptions.NoFormException(err));
+                                 });
+                             });
+                     } else {
+                         let promises = [];
+                         for (let i = 0; i < elements.length; i++) {
+                             promises.push(goToContact.bind(this, i, elements[i], browser, url, campaign));
+                         }
+                         Promise.all(promises.map(utils.promise.reflect)).then(function (results) {
+                             var success = results.filter(x => x.status === "resolved");
+                             if (success.length === 0) {
+                                 reject(new Exception("site was not successful"))
+                             } else {
+                                 const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
+                                 utils.selenium.takeScreenshot(browser, pictureName)
+                                     .then(function () {
+                                         console.log('url:' + url + " success!");
+                                         browser.safeQuit();
+                                         resolve()
+                                     }).catch(function (err) {
+                                         finder.logger.error(err);
+                                         console.log('url:' + url + " success!");
+                                         browser.safeQuit();
+                                         resolve()
+                                     });
+                             }
+                         }).catch(function (err) {
+                             if (err.text === "site was not sucessfull") {
+                                 console.log("debug now");
+                             }
+                             browser.safeQuit().then(function () {
+                                 reject(new utils.exceptions.NoContactException(err));
+                             });
 
-        //                 });
-        //             }
-        //         })
-        //         .catch(function (err) {
-        //             reject(err);
-        //         });
-        // }).catch(function (e) {
-        //     browser.safeQuit().then(() =>
-        //         reject(e)).catch(_ => reject(e));
-        // });;
+                         });
+                     }
+                 })
+                 .catch(function (err) {
+                     reject(err);
+                 });
+         }).catch(function (e) {
+             browser.safeQuit().then(() =>
+                 reject(e)).catch(_ => reject(e));
+         });;
     });
 
 }
