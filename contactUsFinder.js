@@ -65,18 +65,10 @@ finder.find = function (url, campaign) {
                             if (success.length === 0) {
                                 reject(new Exception("site was not successful"))
                             } else {
-                                const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
-                                utils.selenium.takeScreenshot(browser, pictureName)
-                                    .then(function () {
-                                        console.log('url:' + url + " success!");
-                                        browser.safeQuit();
-                                        resolve()
-                                    }).catch(function (err) {
-                                        finder.logger.error(err);
-                                        console.log('url:' + url + " success!");
-                                        browser.safeQuit();
-                                        resolve()
-                                    });
+                                console.log('url:' + url + " success!");
+                                browser.safeQuit();
+                                resolve()
+
                             }
                         }).catch(function (err) {
                             if (err.text === "site was not sucessfull") {
@@ -110,30 +102,36 @@ const searchForm = function (browser, campaign) {
                 // Check what happens when theres multiple forms
                 browser.findElements(By.css("form input,form textarea")).then(function (inputs) {
                     fillForm(browser, inputs, campaign).then(function () {
-                        inputs[0].submit().then(function () {
-                            // TODO : try to avoid this setTimeout
-                            setTimeout(function () {
-                                browser.navigate().back()
+                        const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
+                        utils.selenium.takeScreenshot(browser, pictureName).then(function () {
+                            inputs[0].submit().then(function () {
+                                // TODO : try to avoid this setTimeout
+                                setTimeout(function () {
+                                    browser.navigate().back()
+                                        .then(function () {
+                                            resolve();
+                                        }).catch(function (err) {
+                                            reject(err);
+                                        });
+                                }, 3000);
+                            }).catch(function (err) {
+                                const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
+                                utils.selenium.takeScreenshot(browser, pictureName)
                                     .then(function () {
-                                        resolve();
-                                    }).catch(function (err) {
-                                        reject(err);
-                                    });
-                            }, 3000);
-                        }).catch(function (err) {
-                            const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
-                            utils.selenium.takeScreenshot(browser, pictureName)
-                                .then(function () {
-                                    reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err));
-                                    browser.safeQuit();
-                                })
-                                .catch(function (e) {
-                                    browser.safeQuit().then(function () {;
                                         reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err));
-                                    }).catch(e =>
-                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err))
-                                    );
-                                });
+                                        browser.safeQuit();
+                                    })
+                                    .catch(function (e) {
+                                        browser.safeQuit().then(function () {;
+                                            reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err));
+                                        }).catch(e =>
+                                            reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err))
+                                        );
+                                    });
+                            });
+                        }).catch(function (err) {
+                            finder.logger.error(err);
+                            console.log('url:' + url + " success!");
                         });
                     }).catch(function (err) {
                         browser.safeQuit();
