@@ -81,8 +81,12 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                                         })
                                 };
                                 return promise().then(function (element) {
-                                    element.click();
-                                    resolve(report);
+                                    element.click().then(_ =>
+                                            setTimeout(function () {
+                                                resolve(report)
+                                            }, 5000))
+                                        .catch(e =>
+                                            reject(e));
                                 }).catch(function (err) {
                                     reject(new utils.exceptions.NoMoreResultsException(report));
                                 });

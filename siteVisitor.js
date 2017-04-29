@@ -10,6 +10,7 @@ const shouldVisitHost = function (connection, hostname, campaign) {
             database.checkExists(model, hostname).then(function (existsInGeneral) {
                 database.createPrivateBlackList(connection).then(function (model) {
                     database.checkIfSiteBlockedForCampaign(model, hostname, campaign.title).then(function (existsInCampaign) {
+                        console.log(hostname)
                         resolve(!existsInCampaign && !existsInGeneral)
                     }).catch(err => console.log());
                 }).catch(err => console.log(err));
@@ -47,7 +48,7 @@ visitor.visitSite = (connection, url, campaign) => new Promise(function (resolve
                         resolve(1);
                     }).catch(function (err) {
                         //reportData.noCfNumber += 1;
-                        const error = new Error('url:' + url + " " + JSON.stringify(err));
+                        const error = new Error(`url: ${url} ${JSON.stringify(err)} ${JSON.stringify(err.stack)}`);
                         visitor.logger.error(error);
                         reject("url failure")
                     });
