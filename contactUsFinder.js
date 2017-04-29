@@ -171,62 +171,122 @@ const fillForm = function (browser, inputs, campaign) {
                         resolve("message");
                     } else {
                         input.getAttribute("type").then(function (type) {
-                            if (type === "text") {
-                                input.getAttribute("name").then(function (name) {
-                                    const lcName = name.toLowerCase();
-                                    if (lcName.includes("name")) {
-                                        if (lcName.includes("firstName")) {
-                                            input.sendKeys(campaign.firstName);
-                                        } else
-                                        if (lcName.includes("lastName")) {
-                                            input.sendKeys(campaign.lastName);
+
+                            if (type === "text" || type === "email") {
+                                new Promise(function (fulfil, decline) {
+                                    input.getAttribute("name").then(function (name) {
+                                        const lcName = name.toLowerCase();
+                                        if (lcName.includes("name")) {
+                                            if (lcName.includes("firstName")) {
+                                                input.sendKeys(campaign.firstName);
+                                            } else
+                                            if (lcName.includes("lastName")) {
+                                                input.sendKeys(campaign.lastName);
+                                            } else {
+                                                input.sendKeys(`${campaign.firstName} ${campaign.lastName}`);
+                                            }
+                                            resolve(`${lcName}`);
+                                        } else if (lcName.includes("email") || lcName.includes("mail")) {
+                                            input.sendKeys(campaign.email)
+                                            fulfil(`${lcName}`);
+                                        } else if (lcName.includes("company")) {
+                                            input.sendKeys(campaign.company);
+                                            fulfil(`${lcName}`);
+                                        } else if (lcName.includes("phone")) {
+                                            input.sendKeys(campaign.phoneNumber);
+                                            fulfil(`${lcName}`);
                                         } else {
-                                            input.sendKeys(`${campaign.firstName} ${campaign.lastName}`);
+                                            if (lcName.includes("captcha")) {
+                                                browser.findElement(By.xpath("//img[contains(@id ,captcha) or contains(@id ,Captcha)]"))
+                                                    .then(function (element) {
+                                                        element.getAttribute("src").then(function (url) {
+                                                            if (!url) {
+                                                                decline(new utils.exceptions.SubmitExcpetion("could not solve captcha"))
+                                                            } else {
+                                                                request.get({
+                                                                    url: url,
+                                                                    encoding: null
+                                                                }, (err, res, body) => {
+                                                                    if (!err) {
+                                                                        captchaSolver.solve(body).then(function (solution) {
+                                                                            input.sendKeys(solution);
+                                                                            console.log(solution);
+                                                                            fulfil(`${lcName}`);
+                                                                        }).catch(e =>
+                                                                            decline(utils.exceptions.SubmitExcpetion("could not solve captcha")));
+                                                                    } else {
+                                                                        decline(utils.exceptions.SubmitExcpetion("could not solve captcha"));
+                                                                    }
+                                                                });
+                                                            }
+                                                        }).catch(e => decline(new utils.exceptions.SubmitExcpetion("could not solve captcha")));
+                                                    }).catch(e =>
+                                                        decline(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err))
+                                                    )
+                                            } else
+                                                decline(new Error("no input was of the contact type"))
                                         }
-                                        resolve(`${lcName}`);
-                                    } else if (lcName.includes("email") || lcName.includes("mail")) {
-                                        input.sendKeys(campaign.email)
-                                        resolve(`${lcName}`);
-                                    } else if (lcName.includes("company")) {
-                                        input.sendKeys(campaign.company);
-                                        resolve(`${lcName}`);
-                                    } else if (lcName.includes("phone")) {
-                                        input.sendKeys(campaign.phoneNumber);
-                                        resolve(`${lcName}`);
-                                    } else {
-                                        if (lcName.includes("captcha")) {
-                                            browser.findElement(By.xpath("//img[contains(@id ,captcha) or contains(@id ,Captcha)]"))
-                                                .then(function (element) {
-                                                    element.getAttribute("src").then(function (url) {
-                                                        if (!url) {
-                                                            reject(new utils.exceptions.SubmitExcpetion("could not solve captcha"))
-                                                        } else {
-                                                            request.get({
-                                                                url: url,
-                                                                encoding: null
-                                                            }, (err, res, body) => {
-                                                                if (!err) {
-                                                                    captchaSolver.solve(body).then(function (solution) {
-                                                                        input.sendKeys(solution);
-                                                                        console.log(solution);
-                                                                        resolve(`${lcName}`);
-                                                                    }).catch(e =>
-                                                                        reject(utils.exceptions.SubmitExcpetion("could not solve captcha")));
-                                                                } else {
-                                                                    reject(utils.exceptions.SubmitExcpetion("could not solve captcha"));
-                                                                }
-                                                            });
-                                                        }
-                                                    }).catch(e => reject(new utils.exceptions.SubmitExcpetion("could not solve captcha")));
-                                                }).catch(e =>
-                                                    reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err))
-                                                )
-                                        } else
-                                            reject(new Error("no input was of the contact type"))
-                                    }
-                                }).catch(function (err) {
-                                    reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
-                                });
+                                    }).catch(function (err) {
+                                        decline(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
+                                    });
+                                }).then(result => resolve(result))
+                                .catch(_ =>
+                                    input.getAttribute("id").then(function (id) {
+                                        const lcID = id.toLowerCase();
+                                        if (lcID.includes("name")) {
+                                            if (lcID.includes("firstName")) {
+                                                input.sendKeys(campaign.firstName);
+                                            } else
+                                            if (lcID.includes("lastName")) {
+                                                input.sendKeys(campaign.lastName);
+                                            } else {
+                                                input.sendKeys(`${campaign.firstName} ${campaign.lastName}`);
+                                            }
+                                            resolve(`${lcID}`);
+                                        } else if (lcID.includes("email") || lcID.includes("mail")) {
+                                            input.sendKeys(campaign.email)
+                                            resolve(`${lcID}`);
+                                        } else if (lcID.includes("company")) {
+                                            input.sendKeys(campaign.company);
+                                            resolve(`${lcID}`);
+                                        } else if (lcID.includes("phone")) {
+                                            input.sendKeys(campaign.phoneNumber);
+                                            resolve(`${lcID}`);
+                                        } else {
+                                            if (lcID.includes("captcha")) {
+                                                browser.findElement(By.xpath("//img[contains(@id ,captcha) or contains(@id ,Captcha)]"))
+                                                    .then(function (element) {
+                                                        element.getAttribute("src").then(function (url) {
+                                                            if (!url) {
+                                                                reject(new utils.exceptions.SubmitExcpetion("could not solve captcha"))
+                                                            } else {
+                                                                request.get({
+                                                                    url: url,
+                                                                    encoding: null
+                                                                }, (err, res, body) => {
+                                                                    if (!err) {
+                                                                        captchaSolver.solve(body).then(function (solution) {
+                                                                            input.sendKeys(solution);
+                                                                            console.log(solution);
+                                                                            resolve(`${lcName}`);
+                                                                        }).catch(e =>
+                                                                            reject(utils.exceptions.SubmitExcpetion("could not solve captcha")));
+                                                                    } else {
+                                                                        reject(utils.exceptions.SubmitExcpetion("could not solve captcha"));
+                                                                    }
+                                                                });
+                                                            }
+                                                        }).catch(e => reject(new utils.exceptions.SubmitExcpetion("could not solve captcha")));
+                                                    }).catch(e =>
+                                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err))
+                                                    )
+                                            } else
+                                                reject(new Error("no input was of the contact type"))
+                                        }
+
+                                    }).catch(function (err) {
+                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
+                                    }));
                             } else if (type === "checkbox") {
                                 input.click();
                                 resolve();
@@ -236,6 +296,7 @@ const fillForm = function (browser, inputs, campaign) {
                             reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
                         });
                     }
+
                 }).catch(function (err) {
                     reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
                 })
