@@ -12,6 +12,7 @@ let finder = {};
 
 finder.find = function (url, campaign) {
     return new Promise(function (resolve, reject) {
+        finder.didntFill = true;
         let browser = new Builder()
             .forBrowser('chrome')
             .build();
@@ -55,15 +56,17 @@ finder.find = function (url, campaign) {
                         for (let i = 0; i < elements.length; i++) {
                             promises.push(goToContact.bind(this, i, elements[i], browser, url, campaign));
                         }
-                        Promise.all(promises.map(utils.promise.reflect)).then(function (results) {
+                        utils.other.promiseSerial(promises).then(function (results) {
                             var success = results.filter(x => x.status === "resolved");
                             if (success.length === 0) {
                                 browser.safeQuit().then(_ =>
                                     reject(new Error("site was not successful")));
                             } else {
                                 console.log('url:' + url + " success!");
-                                browser.safeQuit();
-                                resolve()
+                                browser.safeQuit().then(_ =>
+                                        resolve())
+                                    .catch(e =>
+                                        reject(e));
 
                             }
                         }).catch(function (err) {
@@ -90,13 +93,13 @@ finder.find = function (url, campaign) {
 
 const searchForm = function (browser, url, campaign) {
     return new Promise(function (resolve, reject) {
-        browser.findElements(By.css("form")).then(function (elements) {
+        browser.findElements(By.css("form[id*='contact']")).then(function (elements) {
             console.log("got to search form")
             if (elements.length === 0) {
                 reject(new utils.exceptions.NoFormException());
             } else {
                 // Check what happens when theres multiple forms
-                browser.findElements(By.css("form input,form textarea")).then(function (inputs) {
+                browser.findElements(By.css("form[id*='contact'] input,form[id*='contact']textarea")).then(function (inputs) {
                     fillForm(browser, inputs, campaign).then(function (res) {
                             if (res.filter(f => f.status === "resolved" && f.v !== undefined).length > 0) {
                                 const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
@@ -115,46 +118,31 @@ const searchForm = function (browser, url, campaign) {
                                         const pictureName = `./sc/${campaign.name}/NoForm-${utils.other.getHostName(url)}`;
                                         utils.selenium.takeScreenshot(browser, pictureName)
                                             .then(function () {
-                                                browser.safeQuit().then(_ =>
-                                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err)))
-                                                    .catch(e =>
-                                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err)));
+                                                reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err));
 
                                             })
                                             .catch(function (e) {
-                                                browser.safeQuit().then(function () {;
-                                                    reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err));
-                                                }).catch(e =>
-                                                    reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err))
-                                                );
+                                                reject(new utils.exceptions.SubmitExcpetion("Couldn't send form", err));
                                             });
                                     });
                                 }).catch(function (err) {
                                     finder.logger.error(err);
+                                    resolve();
                                     console.log('url:' + url + " success!");
                                 });
                             } else {
-                                browser.safeQuit()
-                                    .then(_ =>
-                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs")))
-                                    .catch(e =>
-                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs", e)));
+                                reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs"));
                             }
                         })
                         .catch(function (err) {
-                            browser.safeQuit().catch(e =>
-                                reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs", err)));
+                            reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs", err));
                         })
                 }).catch(function (e) {
-                    console.log("did it crash over here?")
-                    browser.safeQuit().catch(e =>
-                        reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs", err)))
+                    reject(new utils.exceptions.SubmitExcpetion("Couldn't find any inputs", err));
                 });
             }
         }).catch(function (err) {
-            console.log("did it crash here?")
-            browser.safeQuit().catch(e =>
-                reject(err));
+            reject(err);
 
         });
     });
@@ -165,152 +153,137 @@ const fillForm = function (browser, inputs, campaign) {
     for (let input of inputs) {
         promises.push(function () {
             return new Promise(function (resolve, reject) {
-                input.getTagName().then(function (tagName) {
-                    if (tagName === "textarea") {
-                        input.sendKeys(campaign.message);
-                        resolve("message");
-                    } else {
-                        input.getAttribute("type").then(function (type) {
+                if (finder.didntFill) {
 
-                            if (type === "text" || type === "email") {
-                                new Promise(function (fulfil, decline) {
-                                    input.getAttribute("name").then(function (name) {
-                                        const lcName = name.toLowerCase();
-                                        if (lcName.includes("name")) {
-                                            if (lcName.includes("firstName")) {
-                                                input.sendKeys(campaign.firstName);
-                                            } else
-                                            if (lcName.includes("lastName")) {
-                                                input.sendKeys(campaign.lastName);
+                    input.getTagName().then(function (tagName) {
+                        if (tagName === "textarea") {
+                            input.sendKeys(campaign.message);
+                            resolve("message");
+                        } else {
+                            input.getAttribute("type").then(function (type) {
+
+                                if (type === "text" || type === "email") {
+                                    new Promise(function (fulfil, decline) {
+                                            input.getAttribute("name").then(function (name) {
+                                                input.getAttribute("id").then(function (id) {
+                                                    let lcName = name.toLowerCase();
+                                                    let lcID = id.toLowerCase();
+                                                    fulfil([lcName, lcID])
+                                                })
+                                            })
+                                        }).then(function (result) {
+                                            let [lcName, lcID] = result;
+                                            if (lcName.includes("name") || lcID.includes("name")) {
+                                                if (lcName.includes("firstname") || lcID.includes("firstname")) {
+                                                    input.sendKeys(campaign.firstName)
+                                                        .then(
+                                                            resolve(`${lcName}`))
+                                                        .catch(e =>
+                                                            reject(e));
+                                                } else
+                                                if (lcName.includes("lastname") || lcID.includes("lastname")) {
+                                                    input.sendKeys(campaign.lastName)
+                                                        .then(
+                                                            resolve(`${lcName}`))
+                                                        .catch(e =>
+                                                            reject(e));
+                                                } else {
+                                                    input.sendKeys(`${campaign.firstName} ${campaign.lastName}`)
+                                                        .then(
+                                                            resolve(`${lcName}`))
+                                                        .catch(e =>
+                                                            reject(e));
+                                                }
+                                            } else if (lcName.includes("email") || lcName.includes("mail") || lcID.includes("email") || lcID.includes("mail")) {
+                                                input.sendKeys(campaign.email)
+                                                    .then(_ =>
+                                                        resolve(`${lcName}`))
+                                                    .catch(e =>
+                                                        reject(e))
+                                            } else if (lcName.includes("company") || lcID.includes("company")) {
+                                                input.sendKeys(campaign.company)
+                                                    .then(_ =>
+                                                        resolve(`${lcName}`))
+                                                    .catch(e =>
+                                                        reject(e))
+                                            } else if (lcName.includes("phone") || lcID.includes("phone")) {
+                                                input.sendKeys(campaign.phoneNumber)
+                                                    .then(_ =>
+                                                        resolve(`${lcName}`))
+                                                    .catch(e =>
+                                                        reject(e))
                                             } else {
-                                                input.sendKeys(`${campaign.firstName} ${campaign.lastName}`);
-                                            }
-                                            resolve(`${lcName}`);
-                                        } else if (lcName.includes("email") || lcName.includes("mail")) {
-                                            input.sendKeys(campaign.email)
-                                            fulfil(`${lcName}`);
-                                        } else if (lcName.includes("company")) {
-                                            input.sendKeys(campaign.company);
-                                            fulfil(`${lcName}`);
-                                        } else if (lcName.includes("phone")) {
-                                            input.sendKeys(campaign.phoneNumber);
-                                            fulfil(`${lcName}`);
-                                        } else {
-                                            if (lcName.includes("captcha")) {
-                                                browser.findElement(By.xpath("//img[contains(@id ,captcha) or contains(@id ,Captcha)]"))
-                                                    .then(function (element) {
-                                                        element.getAttribute("src").then(function (url) {
-                                                            if (!url) {
-                                                                decline(new utils.exceptions.SubmitExcpetion("could not solve captcha"))
-                                                            } else {
-                                                                request.get({
-                                                                    url: url,
-                                                                    encoding: null
-                                                                }, (err, res, body) => {
-                                                                    if (!err) {
-                                                                        captchaSolver.solve(body).then(function (solution) {
-                                                                            input.sendKeys(solution);
-                                                                            console.log(solution);
-                                                                            fulfil(`${lcName}`);
-                                                                        }).catch(e =>
-                                                                            decline(utils.exceptions.SubmitExcpetion("could not solve captcha")));
-                                                                    } else {
-                                                                        decline(utils.exceptions.SubmitExcpetion("could not solve captcha"));
-                                                                    }
-                                                                });
-                                                            }
-                                                        }).catch(e => decline(new utils.exceptions.SubmitExcpetion("could not solve captcha")));
-                                                    }).catch(e =>
-                                                        decline(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err))
-                                                    )
-                                            } else
-                                                decline(new Error("no input was of the contact type"))
-                                        }
-                                    }).catch(function (err) {
-                                        decline(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
-                                    });
-                                }).then(result => resolve(result))
-                                .catch(_ =>
-                                    input.getAttribute("id").then(function (id) {
-                                        const lcID = id.toLowerCase();
-                                        if (lcID.includes("name")) {
-                                            if (lcID.includes("firstName")) {
-                                                input.sendKeys(campaign.firstName);
-                                            } else
-                                            if (lcID.includes("lastName")) {
-                                                input.sendKeys(campaign.lastName);
-                                            } else {
-                                                input.sendKeys(`${campaign.firstName} ${campaign.lastName}`);
-                                            }
-                                            resolve(`${lcID}`);
-                                        } else if (lcID.includes("email") || lcID.includes("mail")) {
-                                            input.sendKeys(campaign.email)
-                                            resolve(`${lcID}`);
-                                        } else if (lcID.includes("company")) {
-                                            input.sendKeys(campaign.company);
-                                            resolve(`${lcID}`);
-                                        } else if (lcID.includes("phone")) {
-                                            input.sendKeys(campaign.phoneNumber);
-                                            resolve(`${lcID}`);
-                                        } else {
-                                            if (lcID.includes("captcha")) {
-                                                browser.findElement(By.xpath("//img[contains(@id ,captcha) or contains(@id ,Captcha)]"))
-                                                    .then(function (element) {
-                                                        element.getAttribute("src").then(function (url) {
-                                                            if (!url) {
+                                                if (lcName.includes("captcha") || lcID.includes("captcha")) {
+                                                    browser.findElement(By.xpath("//img[contains(@id ,captcha) or contains(@id ,Captcha)]"))
+                                                        .then(function (element) {
+                                                            element.getAttribute("src").then(function (url) {
+                                                                if (!url) {
+                                                                    reject(new utils.exceptions.SubmitExcpetion("could not solve captcha"))
+                                                                } else {
+                                                                    request.get({
+                                                                        url: url,
+                                                                        encoding: null
+                                                                    }, (err, res, body) => {
+                                                                        if (!err) {
+                                                                            captchaSolver.solve(body).then(function (solution) {
+                                                                                input.sendKeys(solution).then(_ =>
+                                                                                        resolve(`${lcName}`))
+                                                                                    .catch(e =>
+                                                                                        reject(e));
+                                                                            }).catch(e =>
+                                                                                reject(utils.exceptions.SubmitExcpetion("could not solve captcha", e)));
+                                                                        } else {
+                                                                            reject(utils.exceptions.SubmitExcpetion("could not solve captcha"));
+                                                                        }
+                                                                    });
+                                                                }
+                                                            }).catch(e =>
                                                                 reject(new utils.exceptions.SubmitExcpetion("could not solve captcha"))
-                                                            } else {
-                                                                request.get({
-                                                                    url: url,
-                                                                    encoding: null
-                                                                }, (err, res, body) => {
-                                                                    if (!err) {
-                                                                        captchaSolver.solve(body).then(function (solution) {
-                                                                            input.sendKeys(solution);
-                                                                            console.log(solution);
-                                                                            resolve(`${lcName}`);
-                                                                        }).catch(e =>
-                                                                            reject(utils.exceptions.SubmitExcpetion("could not solve captcha")));
-                                                                    } else {
-                                                                        reject(utils.exceptions.SubmitExcpetion("could not solve captcha"));
-                                                                    }
-                                                                });
-                                                            }
-                                                        }).catch(e => reject(new utils.exceptions.SubmitExcpetion("could not solve captcha")));
-                                                    }).catch(e =>
-                                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err))
-                                                    )
-                                            } else
-                                                reject(new Error("no input was of the contact type"))
-                                        }
+                                                            );
+                                                        }).catch(e =>
+                                                            reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err))
+                                                        )
+                                                } else
+                                                    reject(new Error("no input was of the contact type"))
+                                            }
+                                        })
+                                        .catch(function (err) {
+                                            reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
+                                        });
+                                } else if (type === "checkbox") {
+                                    input.click();
+                                    resolve();
+                                } else
+                                    resolve();
+                            }).catch(function (err) {
+                                reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
+                            });
+                        }
 
-                                    }).catch(function (err) {
-                                        reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
-                                    }));
-                            } else if (type === "checkbox") {
-                                input.click();
-                                resolve();
-                            } else
-                                resolve();
-                        }).catch(function (err) {
-                            reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
-                        });
-                    }
-
-                }).catch(function (err) {
-                    reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
-                })
+                    }).catch(function (err) {
+                        reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err));
+                    })
+                } else {
+                    reject(new Error("already filled form"));
+                }
             })
+
+
         });
     }
-    return Promise.all(promises.map(utils.promise.reflect));
+    return Promise.all(promises.map(utils.promise.reflect)).then(function (results) {
+        if (results.filter(f => f.status === "resolved" && f.v !== undefined).length > 0) {
+            finder.didntFill = false;
+        }
+        return results
+    });
 };
 const goToContact = function (index, element, browser, url, campaign) {
     return new Promise(function (resolve, reject) {
         var click = () => browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"), 200)
             .then(elements => elements[index].click())
         utils.promise.tryAtMost(undefined, 10, click)
-            .then(function () {;
+            .then(function () {
                 return searchForm(browser, url, campaign)
                     .then(_ => resolve())
                     .catch(err => {
@@ -319,18 +292,13 @@ const goToContact = function (index, element, browser, url, campaign) {
                             .then(_ =>
                                 reject(err))
                             .catch(function (e) {
-                                browser.safeQuit().then(function () {;
-                                    reject(e);
-                                }).catch(e =>
-                                    reject(e));
+                                reject(e);
                             });
                     }).catch(e =>
                         reject(e));
             }).catch(function (e) {
-                browser.safeQuit().then(() =>
-                    reject(e));
+                reject(e);
             });
-    });
+    })
 };
-
 module.exports = finder;

@@ -92,6 +92,7 @@ utils.exceptions.NoMoreResultsException = function NoMoreResultsException(result
 };
 
 utils.other.getHostName = function (url) {
+    console.log(url);
     const hostname = URL.parse(url).hostname;
     return hostname.indexOf('www.') && hostname || hostname.replace('www.', '');
 };
