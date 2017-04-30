@@ -45,11 +45,13 @@ finder.find = function (url, campaign) {
                             .then(function () {
                                 browser.safeQuit().then(function () {
                                     reject(new utils.exceptions.NoFormException());
-                                });
+                                }).catch(e =>
+                                    reject(new utils.exceptions.NoFormException()));
                             }).catch(function (err) {
                                 browser.safeQuit().then(function () {
                                     reject(new utils.exceptions.NoFormException(err));
-                                });
+                                }).catch(e =>
+                                    reject(new utils.exceptions.NoFormException()));
                             });
                     } else {
                         let promises = [];
@@ -93,13 +95,13 @@ finder.find = function (url, campaign) {
 
 const searchForm = function (browser, url, campaign) {
     return new Promise(function (resolve, reject) {
-        browser.findElements(By.css("form[id*='contact']")).then(function (elements) {
+        browser.findElements(By.css("form")).then(function (elements) {
             console.log("got to search form")
             if (elements.length === 0) {
                 reject(new utils.exceptions.NoFormException());
             } else {
                 // Check what happens when theres multiple forms
-                browser.findElements(By.css("form[id*='contact'] input,form[id*='contact']textarea")).then(function (inputs) {
+                browser.findElements(By.css("form input,form textarea")).then(function (inputs) {
                     fillForm(browser, inputs, campaign).then(function (res) {
                             if (res.filter(f => f.status === "resolved" && f.v !== undefined).length > 0) {
                                 const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;

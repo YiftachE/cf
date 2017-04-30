@@ -53,7 +53,7 @@ handler.addToBlackList = function (BlackListModel, data) {
     return new Promise(function (fulfill, reject) {
         if (BlackListModel) {
             BlackListModel.create({
-                    site: data.site
+                    site: data.site,
                 })
                 .then(function (blackListedSite) {
                     fulfill(blackListedSite);
@@ -112,6 +112,9 @@ handler.createPrivateBlackList = function (connection) {
             },
             campaign: {
                 type: DataTypes.STRING
+            },
+            didFail: {
+                type: DataTypes.BOOLEAN
             }
         }, {
             freezeTableName: true // Model tableName will be the same as the model name
@@ -136,6 +139,7 @@ handler.addToPrivateBlackList = function (PrivateBlackListModel, data) {
         if (PrivateBlackListModel) {
             PrivateBlackListModel.create({
                     site: data.site,
+                    didFail: data.didFail,
                     campaign: data.campaign
                 })
                 .then(function (PrivateBlackListModel) {
@@ -149,18 +153,23 @@ handler.addToPrivateBlackList = function (PrivateBlackListModel, data) {
 }
 
 
-handler.checkIfSiteBlockedForCampaign = function (PrivateBlackListModel, site, campaign) {
+handler.checkIfSiteBlockedForCampaign = function (PrivateBlackListModel, site, campaign, reflowFailures) {
     return new Promise(function (fulfill, reject) {
+        let resPromise;
+
         PrivateBlackListModel.findAll({
                 where: {
                     campaign: campaign,
-                    site: site
+                    site: site,
+
                 }
-            })
-            .then(function (site) {
+            }).then(function (sites) {
                 console.log(site);
-                if (site.length > 0) {
-                    fulfill(true);
+                if (sites.length > 0) {
+                    if (reflowFailures && sites.filter(site => site.dataValues.didFail).length > 0) {
+                        fulfill(false);
+                    } else
+                        fulfill(true);
                 } else {
                     fulfill(false);
                 }
