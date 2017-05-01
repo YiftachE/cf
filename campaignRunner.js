@@ -14,7 +14,7 @@ runner.run = function (campaign, limit) {
         transports: [
             new(winston.transports.Console)(),
             new(winston.transports.File)({
-                filename: `./logs/${campaign.title}-${curTime}.log`
+                filename: `./logs/${campaign.name}-${curTime}.log`
             })
         ]
     });
@@ -31,7 +31,7 @@ runner.run = function (campaign, limit) {
             aggReport.keyword += `,${curReport.keyword}`
             return aggReport;
         },init);
-        utils.other.createReport(aggReport, curTime, campaign.title);
+        utils.other.createReport(aggReport, curTime, campaign.name);
 
     }).catch(function (err) {
         

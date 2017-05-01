@@ -9,7 +9,7 @@ const shouldVisitHost = function (connection, hostname, campaign, checkForFailur
         database.createBlackListModel(connection).then(function (model) {
             database.checkExists(model, hostname).then(function (existsInGeneral) {
                 database.createPrivateBlackList(connection).then(function (model) {
-                    database.checkIfSiteBlockedForCampaign(model, hostname, campaign.title, checkForFailure).then(function (existsInCampaign) {
+                    database.checkIfSiteBlockedForCampaign(model, hostname, campaign.name, checkForFailure).then(function (existsInCampaign) {
                         resolve(!existsInCampaign && !existsInGeneral)
                     }).catch(err => console.log());
                 }).catch(err => console.log(err));
@@ -34,7 +34,7 @@ const addToBlacklist = function (url, campaign, connection, didFail) {
         database.createPrivateBlackList(connection).then(function (model) {
             database.addToPrivateBlackList(model, {
                 site: hostname,
-                campaign: campaign.title,
+                campaign: campaign.name,
                 didFail: didFail
             }).then(function () {
                 resolve();
