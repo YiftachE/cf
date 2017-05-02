@@ -177,13 +177,18 @@ const fillForm = function (browser, inputs, campaign) {
                                             })
                                         }).then(function (result) {
                                             let [lcName, lcID] = result;
-                                            if (lcName.includes("company") || lcID.includes("company")) {
+                                            if (lcName.includes("company") || lcID.includes("company") || lcName.includes("firm") || lcID.includes("firm")) {
                                                 input.sendKeys(campaign.company)
                                                     .then(_ =>
                                                         resolve(`${lcName}`))
                                                     .catch(e =>
                                                         reject(e))
-
+                                            } else if (lcName.includes("job") || lcID.includes("job")) {
+                                                input.sendKeys(campaign.job)
+                                                    .then(_ =>
+                                                        resolve(`${lcName}`))
+                                                    .catch(e =>
+                                                        reject(e))
                                             } else if (lcName.includes("email") || lcName.includes("mail") || lcID.includes("email") || lcID.includes("mail") || type == "email") {
                                                 input.sendKeys(campaign.email)
                                                     .then(_ =>
@@ -191,7 +196,7 @@ const fillForm = function (browser, inputs, campaign) {
                                                     .catch(e =>
                                                         reject(e))
                                             } else if (lcName.includes("name") || lcID.includes("name")) {
-                                                if (lcName.includes("firstname") || lcID.includes("firstname")||lcName.includes("yourname")||lcID.includes("yourname")) {
+                                                if (lcName.includes("firstname") || lcID.includes("firstname") || lcName.includes("yourname") || lcID.includes("yourname")) {
                                                     input.sendKeys(campaign.firstName)
                                                         .then(
                                                             resolve(`${lcName}`))
