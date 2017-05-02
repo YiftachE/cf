@@ -101,7 +101,7 @@ const searchForm = function (browser, url, campaign) {
                 reject(new utils.exceptions.NoFormException());
             } else {
                 // Check what happens when theres multiple forms
-                browser.findElements(By.css("form[action*=Contact] input,form[action*=Contact] textarea")).then(function (inputs) {
+                browser.findElements(By.css("form[action*=contact i] input,form[action*=contact i] textarea")).then(function (inputs) {
                     fillForm(browser, inputs, campaign).then(function (res) {
                             if (res.filter(f => f.status === "resolved" && f.v !== undefined).length > 0) {
                                 const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
