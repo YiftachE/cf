@@ -101,11 +101,13 @@ const searchForm = function (browser, url, campaign) {
                 reject(new utils.exceptions.NoFormException());
             } else {
                 // Check what happens when theres multiple forms
-                browser.findElements(By.css("form input,form textarea")).then(function (inputs) {
+                browser.findElements(By.css("form[action*=Contact] input,form[action*=Contact] textarea")).then(function (inputs) {
                     fillForm(browser, inputs, campaign).then(function (res) {
                             if (res.filter(f => f.status === "resolved" && f.v !== undefined).length > 0) {
                                 const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
                                 utils.selenium.takeScreenshot(browser, pictureName).then(function () {
+                                    inputs[0].getAttribute("name").then(name =>
+                                        console.log(name))
                                     inputs[0].submit().then(function () {
                                         // TODO : try to avoid this setTimeout
                                         setTimeout(function () {
@@ -168,15 +170,28 @@ const fillForm = function (browser, inputs, campaign) {
                                     new Promise(function (fulfil, decline) {
                                             input.getAttribute("name").then(function (name) {
                                                 input.getAttribute("id").then(function (id) {
-                                                    let lcName = name.toLowerCase();
-                                                    let lcID = id.toLowerCase();
+                                                    let lcName = name.toLowerCase().replace("_", "").replace("-", "");
+                                                    let lcID = id.toLowerCase().replace("_", "").replace("-", "");
                                                     fulfil([lcName, lcID])
                                                 })
                                             })
                                         }).then(function (result) {
                                             let [lcName, lcID] = result;
-                                            if (lcName.includes("name") || lcID.includes("name")) {
-                                                if (lcName.includes("firstname") || lcID.includes("firstname")) {
+                                            if (lcName.includes("company") || lcID.includes("company")) {
+                                                input.sendKeys(campaign.company)
+                                                    .then(_ =>
+                                                        resolve(`${lcName}`))
+                                                    .catch(e =>
+                                                        reject(e))
+
+                                            } else if (lcName.includes("email") || lcName.includes("mail") || lcID.includes("email") || lcID.includes("mail") || type == "email") {
+                                                input.sendKeys(campaign.email)
+                                                    .then(_ =>
+                                                        resolve(`${lcName}`))
+                                                    .catch(e =>
+                                                        reject(e))
+                                            } else if (lcName.includes("name") || lcID.includes("name")) {
+                                                if (lcName.includes("firstname") || lcID.includes("firstname")||lcName.includes("yourname")||lcID.includes("yourname")) {
                                                     input.sendKeys(campaign.firstName)
                                                         .then(
                                                             resolve(`${lcName}`))
@@ -196,27 +211,22 @@ const fillForm = function (browser, inputs, campaign) {
                                                         .catch(e =>
                                                             reject(e));
                                                 }
-                                            } else if (lcName.includes("email") || lcName.includes("mail") || lcID.includes("email") || lcID.includes("mail")) {
-                                                input.sendKeys(campaign.email)
-                                                    .then(_ =>
-                                                        resolve(`${lcName}`))
-                                                    .catch(e =>
-                                                        reject(e))
-                                            } else if (lcName.includes("company") || lcID.includes("company")) {
-                                                input.sendKeys(campaign.company)
-                                                    .then(_ =>
-                                                        resolve(`${lcName}`))
-                                                    .catch(e =>
-                                                        reject(e))
                                             } else if (lcName.includes("phone") || lcID.includes("phone")) {
                                                 input.sendKeys(campaign.phoneNumber)
                                                     .then(_ =>
                                                         resolve(`${lcName}`))
                                                     .catch(e =>
                                                         reject(e))
+                                            } else
+                                            if (lcName.includes("country") || lcID.includes("country")) {
+                                                input.sendKeys(campaign.country)
+                                                    .then(_ =>
+                                                        resolve(`${lcName}`))
+                                                    .catch(e =>
+                                                        reject(e))
                                             } else {
                                                 if (lcName.includes("captcha") || lcID.includes("captcha")) {
-                                                    browser.findElement(By.xpath("//img[contains(@id ,captcha) or contains(@id ,Captcha)]"))
+                                                    findCaptchaElement(browser)
                                                         .then(function (element) {
                                                             element.getAttribute("src").then(function (url) {
                                                                 if (!url) {
@@ -243,7 +253,7 @@ const fillForm = function (browser, inputs, campaign) {
                                                                 reject(new utils.exceptions.SubmitExcpetion("could not solve captcha"))
                                                             );
                                                         }).catch(e =>
-                                                            reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", err))
+                                                            reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", e))
                                                         )
                                                 } else
                                                     reject(new Error("no input was of the contact type"))
@@ -280,6 +290,16 @@ const fillForm = function (browser, inputs, campaign) {
         return results
     });
 };
+const findCaptchaElement = function (browser) {
+    return new Promise(function (resolve, reject) {
+        browser.findElement(By.xpath("//img[contains(@id ,'captcha') or contains(@id ,'Captcha')]")).then(elements => resolve(elements))
+            .catch(_ => browser.findElement(By.css(".captcha img"))
+                .then(element =>
+                    resolve(element))
+                .catch(e =>
+                    reject(e)));
+    });
+}
 const goToContact = function (index, element, browser, url, campaign) {
     return new Promise(function (resolve, reject) {
         var click = () => browser.findElements(By.xpath("//a[contains(translate(text(),'CONTACT','contact'), 'contact')]"), 200)
