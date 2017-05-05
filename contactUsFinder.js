@@ -259,7 +259,7 @@ const fillForm = function (browser, inputs, campaign) {
                                                             reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", e))
                                                         )
                                                 } else
-                                                    reject(n ew Error("no input was of the contact type"))
+                                                    reject(new Error("no input was of the contact type"))
                                             }
                                         })
                                         .catch(function (err) {
