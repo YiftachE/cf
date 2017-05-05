@@ -11,6 +11,7 @@ utils.selenium = {};
 utils.promise = {};
 utils.exceptions = {};
 utils.other = {};
+utils.string={};
 utils.selenium.retryOnStale = function (browser, selector, callback) {
     return browser.findElement(selector).then(callback)
         .thenCatch(function (err) {
