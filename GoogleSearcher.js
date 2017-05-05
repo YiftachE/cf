@@ -19,7 +19,7 @@ self.closedState = false;
 searcher.search = function (campaign, limit) {
     console.log('inside google searcher');
     const promises = [];
-    for (let word of campaign.keywords.filter(v=>!utils.string.isNullOrEmpty(v)))) {
+    for (let word of campaign.keywords.filter(v=>!utils.string.isNullOrEmpty(v))) {
         promises.push(searchKeyword.bind(this, word, limit, campaign, new utils.ReportData(word)));
     }
     return utils.other.promiseSerial(promises).then(p =>
