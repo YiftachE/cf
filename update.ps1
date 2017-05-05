@@ -1,5 +1,6 @@
 write-host "`n  ## CF-Updater ## `n"
 write-host "`n  ## Update Server ## `n"
+cd ~/
 cd cf
 git pull
 forever stopall
@@ -11,3 +12,4 @@ cd cf_front
 git pull
 nssm restart cf_frontend
 
+cd ~/

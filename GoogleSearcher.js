@@ -111,11 +111,7 @@ const searchKeyword = function (keyword, limit, campaign, report) {
             }).catch(function (err) {
                 console.log('found an error');
                 console.log(err);
-                if (err.constructor.name === "NoMoreResultsException") {
-                    return err.results;
-                } else {
-                    reject(report);
-                }
+                reject(report);
             });
         }
         chain.then(function (report) {
@@ -123,13 +119,18 @@ const searchKeyword = function (keyword, limit, campaign, report) {
                 self.closedState = true;
                 resolve(report)
             }).catch(e => resolve(report));
+        }).catch(function (e) {
+            browser.quit().then(function () {;
+                self.closedState = true;
+                resolve(report)
+            }).catch(e => resolve(report))
         });
     }).catch(function (err) {
         if (typeof (err) === utils.exceptions.NoMoreResultsException) {
             browser.quit().then(function () {;
                 self.closedState = true;
-                resolve(err.results)
-            }).catch(e => resolve(err.results));
+                resolve(report)
+            }).catch(e => resolve(report));
 
         } else {
             reject(err);
