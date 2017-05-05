@@ -106,8 +106,6 @@ const searchForm = function (browser, url, campaign) {
                             if (res.filter(f => f.status === "resolved" && f.v !== undefined).length > 0) {
                                 const pictureName = `./sc/Success-${utils.other.getHostName(url)}`;
                                 utils.selenium.takeScreenshot(browser, pictureName).then(function () {
-                                    inputs[0].getAttribute("name").then(name =>
-                                        console.log(name))
                                     inputs[0].submit().then(function () {
                                         // TODO : try to avoid this setTimeout
                                         setTimeout(function () {
@@ -261,7 +259,7 @@ const fillForm = function (browser, inputs, campaign) {
                                                             reject(new utils.exceptions.SubmitExcpetion("Couldn't parse form", e))
                                                         )
                                                 } else
-                                                    reject(new Error("no input was of the contact type"))
+                                                    reject(n ew Error("no input was of the contact type"))
                                             }
                                         })
                                         .catch(function (err) {
