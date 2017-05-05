@@ -21,7 +21,9 @@ runner.run = function (campaign, limit) {
 
     searcher.logger = logger;
     logger.info('Started running...');
+    console.log(campaign.keywords)
     searcher.search(campaign, limit).then(function (reports) {
+        console.log(reports);
         let init = new utils.ReportData();
         let aggReport=reports.reduce(function (aggReport, curReport) {
             aggReport.sitesVisitedNumber += curReport.sitesVisitedNumber;
