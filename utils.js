@@ -147,6 +147,7 @@ utils.promise.reflect = function reflect(promise) {
             }
         });
 }
+utils.string.isNullOrEmpty = value => value == null || value === "";
 
 utils.other.promiseSerial = funcs =>
     funcs.reduce((promise, func) =>
