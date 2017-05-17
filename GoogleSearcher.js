@@ -55,7 +55,7 @@ const searchKeyword = function (keyword, limit, campaign, report) {
         });
         let connection = database.create();
         var chain = Promise.resolve(report);
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < (limit / 10); i++) {
             chain = chain.then(() => {
                 return new Promise(function (resolve, reject) {
                     findLinks(browser).then(function (links) {
