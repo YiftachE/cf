@@ -25,19 +25,30 @@ runner.run = function (campaign, limit) {
     searcher.search(campaign, limit).then(function (reports) {
         console.log(reports);
         let init = new utils.ReportData();
-        let aggReport=reports.reduce(function (aggReport, curReport) {
+        let aggReport = reports.reduce(function (aggReport, curReport) {
             aggReport.sitesVisitedNumber += curReport.sitesVisitedNumber;
             aggReport.cfSentNumber += curReport.cfSentNumber;
             aggReport.blockedByBLNumber += curReport.blockedByBLNumber;
             aggReport.noCfNumber += curReport.noCfNumber;
             aggReport.keyword += `,${curReport.keyword}`
             return aggReport;
-        },init);
+        }, init);
         utils.other.createReport(aggReport, curTime, campaign.name);
 
     }).catch(function (err) {
-        
         logger.error(JSON.stringify(err));
+        console.log(reports);
+        let init = new utils.ReportData();
+        let aggReport = err.reduce(function (aggReport, curReport) {
+            aggReport.sitesVisitedNumber += curReport.sitesVisitedNumber;
+            aggReport.cfSentNumber += curReport.cfSentNumber;
+            aggReport.blockedByBLNumber += curReport.blockedByBLNumber;
+            aggReport.noCfNumber += curReport.noCfNumber;
+            aggReport.keyword += `,${curReport.keyword}`
+            return aggReport;
+        }, init);
+        utils.other.createReport(aggReport, curTime, campaign.name);
+
     });
 };
 
