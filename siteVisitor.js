@@ -6,6 +6,7 @@ const finder = require('./contactUsFinder.js');
 const visitor = {};
 const shouldVisitHost = function (connection, hostname, campaign, checkForFailure) {
     return new Promise(function (resolve, reject) {
+
         database.createBlackListModel(connection).then(function (model) {
             database.checkExists(model, hostname).then(function (existsInGeneral) {
                 database.createPrivateBlackList(connection).then(function (model) {
