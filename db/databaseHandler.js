@@ -10,8 +10,8 @@ function DbConnectionFailException(message) {
 
 handler.create = function () {
     // let sequelize = new Sequelize('ctform', 'root', 'mysqlzhd123Q!@#', {
-       let sequelize = new Sequelize('ctform', 'root', 'mysqlzhd123Q!@#', {
-        host: '198.199.123.131',
+       let sequelize = new Sequelize('cftable', 'zdh', 'Aa123456', {
+        host: '159.203.99.58',
         dialect: 'mysql',
         pool: {
             max: 50,
